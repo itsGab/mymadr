@@ -37,5 +37,4 @@ class LivroPublic(Livro):
 
 
 class LivroList(BaseModel):
-    livros: list [LivroPublic]
-
+    livros: list[LivroPublic]

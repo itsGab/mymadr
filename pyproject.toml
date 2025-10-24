@@ -29,6 +29,7 @@ line-length = 79
 
 [tool.ruff.lint]
 preview = true
+select = ['I', 'F', 'E', 'W', 'PL', 'PT', 'FAST']
 
 [tool.ruff.format]
 preview = true
@@ -43,3 +44,4 @@ format = 'ruff format'
 run = 'fastapi dev mymadr/app.py'
 pre_test = 'task lint'
 test = 'pytest -s -x --cov=mymadr -vv'
+post_test = 'coverage html'
