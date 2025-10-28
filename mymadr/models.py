@@ -23,8 +23,10 @@ class Book:
     # FIXME: colocar um validacao no Ano do livro.
     year: Mapped[int] = mapped_column()
     # relacionamento com author
-    author_id: Mapped[int] = mapped_column(ForeignKey('authors.id'))~
-    author: Mapped[Author] = mapped_column(init=False, back_populates='books')
+    author_id: Mapped[int] = mapped_column(ForeignKey('authors.id'))
+    author: Mapped['Author'] = mapped_column(
+        init=False, back_populates='books'
+    )
 
 
 @table_registry.mapped_as_dataclass

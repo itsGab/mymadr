@@ -7,7 +7,7 @@ router = APIRouter(prefix='/user', tags=['user'])
 
 @router.post('/', response_model=UserPublic)
 def create_user(user: User):
-    # FIXME create user func
+    # FIXME create: create_user
     p_user = UserPublic(
         username=user.username,
         email=user.email,
