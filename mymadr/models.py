@@ -6,7 +6,7 @@ table_registry = registry()
 
 @table_registry.mapped_as_dataclass
 class Account:
-    __tablename__ = 'accounts'
+    __tablename__ = "accounts"
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     username: Mapped[str] = mapped_column(unique=True)
@@ -16,26 +16,26 @@ class Account:
 
 @table_registry.mapped_as_dataclass
 class Book:
-    __tablename__ = 'books'
+    __tablename__ = "books"
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     title: Mapped[str] = mapped_column()
     year: Mapped[int] = mapped_column()
-    author_id: Mapped[int] = mapped_column(ForeignKey('authors.id'))
-    author: Mapped['Author'] = relationship(
+    author_id: Mapped[int] = mapped_column(ForeignKey("authors.id"))
+    author: Mapped["Author"] = relationship(
         init=False,
-        back_populates='books',
+        back_populates="books",
     )
 
 
 @table_registry.mapped_as_dataclass
 class Author:
-    __tablename__ = 'authors'
+    __tablename__ = "authors"
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     name: Mapped[str] = mapped_column(unique=True)
-    books: Mapped[list['Book']] = relationship(
+    books: Mapped[list["Book"]] = relationship(
         init=False,
-        back_populates='author',
-        cascade='all, delete-orphan',
+        back_populates="author",
+        cascade="all, delete-orphan",
     )

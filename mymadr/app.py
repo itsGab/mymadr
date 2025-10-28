@@ -9,6 +9,6 @@ app.include_router(livros.router)
 app.include_router(contas.router)
 
 
-@app.get('/')
+@app.get("/")
 def read_root():
-    return {'message': 'Hello there!'}
+    return {"message": "Hello there!"}
