@@ -15,7 +15,7 @@ def client():
 
 @pytest.fixture
 def session():
-    engine = create_engine(Settings.DATABASE_URL)
+    engine = create_engine(Settings().DATABASE_URL)  # type: ignore
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
