@@ -19,13 +19,12 @@ class Book:
     __tablename__ = 'books'
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    title: Mapped[str] = mapped_column(unique=True)
-    # FIXME: colocar um validacao no Ano do livro.
+    title: Mapped[str] = mapped_column()
     year: Mapped[int] = mapped_column()
-    # relacionamento com author
     author_id: Mapped[int] = mapped_column(ForeignKey('authors.id'))
-    author: Mapped['Author'] = mapped_column(
-        init=False, back_populates='books'
+    author: Mapped['Author'] = relationship(
+        init=False,
+        back_populates='books',
     )
 
 
@@ -37,6 +36,6 @@ class Author:
     name: Mapped[str] = mapped_column(unique=True)
     books: Mapped[list['Book']] = relationship(
         init=False,
-        back_populates='authors',
+        back_populates='author',
         cascade='all, delete-orphan',
     )

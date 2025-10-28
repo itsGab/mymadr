@@ -27,7 +27,8 @@ class RomancistaList(BaseModel):
 
 
 class Livro(BaseModel):
-    ano: int
+    # TODO: validacao no Ano do livro.
+    ano: int  # ??? Field(..., ge=0)
     titulo: str
     romancista_id: int
 
