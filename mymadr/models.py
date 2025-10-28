@@ -14,18 +14,16 @@ class Account:
     email: Mapped[str] = mapped_column(unique=True)
 
 
-
 @table_registry.mapped_as_dataclass
 class Book:
-    # LIVRO tem id relationship com ROMANCISTA
     __tablename__ = 'books'
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     title: Mapped[str] = mapped_column(unique=True)
     # FIXME: colocar um validacao no Ano do livro.
     year: Mapped[int] = mapped_column()
-    author_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'))
-
+    # relacionamento com author
+    author_id: Mapped[int] = mapped_column(ForeignKey('authors.id'))
 
 
 @table_registry.mapped_as_dataclass
