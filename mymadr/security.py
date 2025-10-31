@@ -18,13 +18,13 @@ pwd_context = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl='user/token', refreshUrl='user/token_refresh'
 )
-T_oauth2_scheme = Annotated[str, Depends(oauth2_scheme)]
-T_session = Annotated[Session, Depends(get_session)]
+TokenForm = Annotated[str, Depends(oauth2_scheme)]
+GetSession = Annotated[Session, Depends(get_session)]
 
 
 def get_current_user(
-    session: T_session,
-    token: T_oauth2_scheme,
+    session: GetSession,
+    token: TokenForm,
 ):
     credential_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,

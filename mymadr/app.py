@@ -4,14 +4,8 @@ from mymadr.routers import contas, livros, romancistas
 
 # TODO definir se vai usar!
 tags_metadata = [
-    {
-        "name": "user",
-        "description": "Usuarios"
-    },
-    {
-        "name": "auth",
-        "description": "Autorizacoes!!!"
-    }
+    {"name": "user", "description": "Usuarios"},
+    {"name": "auth", "description": "Autorizacoes!!!"},
 ]
 
 

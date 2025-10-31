@@ -13,7 +13,7 @@ SanitizedStr = Annotated[  # para fazer sanitização dos nomes
     StringConstraints(
         strip_whitespace=True,
         to_lower=True,
-    )
+    ),
 ]
 
 

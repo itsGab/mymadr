@@ -19,13 +19,13 @@ from mymadr.security import (
 
 router = APIRouter(prefix="/user")
 
-T_session = Annotated[Session, Depends(get_session)]
-T_oauth2_form = Annotated[OAuth2PasswordRequestForm, Depends()]
-T_current_user = Annotated[Account, Depends(get_current_user)]
+GetSession = Annotated[Session, Depends(get_session)]
+TokenForm = Annotated[OAuth2PasswordRequestForm, Depends()]
+GetCurrentUser = Annotated[Account, Depends(get_current_user)]
 
 
 @router.post("/token", response_model=Token, tags=["auth"])
-def login_for_access_token(form_data: T_oauth2_form, session: T_session):
+def login_for_access_token(form_data: TokenForm, session: GetSession):
     user = session.scalar(
         select(Account).where(Account.email == form_data.username)
     )
@@ -48,7 +48,7 @@ def refresh_token(): ...  # TODO fazer o refresh
 
 
 @router.post("/", response_model=UserPublic, tags=["user"])
-def create_user(user: User, session: T_session):
+def create_user(user: User, session: GetSession):
     db_user = session.scalar(
         select(Account).where(
             (Account.username == user.username) | (Account.email == user.email)
@@ -65,7 +65,7 @@ def create_user(user: User, session: T_session):
                 status_code=HTTPStatus.CONFLICT,
                 detail="EMAIL REPETIDO",  # TODO arrumar mensagem de erro
             )
-    hashed_password = get_password_hash(user.password)
+    hashed_password = get_password_hash(user.password.get_secret_value())
     user_info = Account(
         username=user.username, password=hashed_password, email=user.email
     )
@@ -80,16 +80,17 @@ def update_user(
     # TODO create: update user func
     user_id: int,
     user: User,
-    session: T_session,
-    current_user: T_current_user,
+    session: GetSession,
+    current_user: GetCurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(
             # TODO arruma a mensagem
-            status_code=HTTPStatus.FORBIDDEN, detail='nao tem permissao'
+            status_code=HTTPStatus.FORBIDDEN,
+            detail="nao tem permissao",
         )
     try:
-        hashed = get_password_hash(user.password)
+        hashed = get_password_hash(user.password.get_secret_value())
         current_user.username = user.username
         current_user.password = hashed
         current_user.email = user.email
@@ -100,23 +101,24 @@ def update_user(
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             # TODO arruma mensagem
-            detail='conflito de usuario ou email'
+            detail="conflito de usuario ou email",
         )
 
 
 @router.delete("/{user_id}", response_model=Message, tags=["user"])
 def delete_user(
     user_id: int,
-    session: T_session,
-    current_user: T_current_user,
+    session: GetSession,
+    current_user: GetCurrentUser,
 ):
     # TODO create: delete user func
     if current_user.id != user_id:
         raise HTTPException(
             # TODO arrumar a mensagem
-            status_code=HTTPStatus.FORBIDDEN, detail='sem permissao'
+            status_code=HTTPStatus.FORBIDDEN,
+            detail="sem permissao",
         )
     session.delete(current_user)
     session.commit()
     # TODO arrumar mensagem
-    return {'message': 'usuario deletado com sucesso'}
+    return {"message": "usuario deletado com sucesso"}
