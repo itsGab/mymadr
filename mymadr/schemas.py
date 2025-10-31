@@ -1,19 +1,23 @@
+import re
 from typing import Annotated
 
 from pydantic import (
+    AfterValidator,
     BaseModel,
     EmailStr,
     PositiveInt,
     SecretStr,
-    StringConstraints,
 )
+
+
+def sanitizer(name: str) -> str:
+    name = re.sub(r'\s+', ' ', name.lower()).strip()
+    return name
+
 
 SanitizedStr = Annotated[  # para fazer sanitização dos nomes
     str,
-    StringConstraints(
-        strip_whitespace=True,
-        to_lower=True,
-    ),
+    AfterValidator(sanitizer)
 ]
 
 
