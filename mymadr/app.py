@@ -2,7 +2,20 @@ from fastapi import FastAPI
 
 from mymadr.routers import contas, livros, romancistas
 
-app = FastAPI()
+# TODO definir se vai usar!
+tags_metadata = [
+    {
+        "name": "user",
+        "description": "Usuarios"
+    },
+    {
+        "name": "auth",
+        "description": "Autorizacoes!!!"
+    }
+]
+
+
+app = FastAPI(openapi_tags=tags_metadata)
 
 app.include_router(romancistas.router)
 app.include_router(livros.router)
