@@ -4,25 +4,28 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from mymadr.database import get_session
 from mymadr.models import Account
-from mymadr.schemas import Token, User, UserPublic
+from mymadr.schemas import Message, Token, User, UserPublic
 from mymadr.security import (
     create_access_token,
+    get_current_user,
     get_password_hash,
     verify_password,
 )
 
-router = APIRouter(prefix="/user", tags=["user"])
+router = APIRouter(prefix="/user")
 
-DbSession = Annotated[Session, Depends(get_session)]
-OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
+T_session = Annotated[Session, Depends(get_session)]
+T_oauth2_form = Annotated[OAuth2PasswordRequestForm, Depends()]
+T_current_user = Annotated[Account, Depends(get_current_user)]
 
 
-@router.post("/token/", response_model=Token,)
-def login_for_access_token(form_data: OAuth2Form, session: DbSession):
+@router.post("/token", response_model=Token, tags=["auth"])
+def login_for_access_token(form_data: T_oauth2_form, session: T_session):
     user = session.scalar(
         select(Account).where(Account.email == form_data.username)
     )
@@ -40,12 +43,12 @@ def login_for_access_token(form_data: OAuth2Form, session: DbSession):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/token/refresh/", response_model=Token)
-def refresh_token(): ...
+@router.post("/token_refresh", response_model=Token, tags=["auth"])
+def refresh_token(): ...  # TODO fazer o refresh
 
 
-@router.post("/", response_model=UserPublic)
-def create_user(user: User, session: DbSession):
+@router.post("/", response_model=UserPublic, tags=["user"])
+def create_user(user: User, session: T_session):
     db_user = session.scalar(
         select(Account).where(
             (Account.username == user.username) | (Account.email == user.email)
@@ -72,13 +75,48 @@ def create_user(user: User, session: DbSession):
     return user_info
 
 
-@router.put("/")
-def update_user():
+@router.put("/{user_id}", response_model=UserPublic, tags=["user"])
+def update_user(
     # TODO create: update user func
-    ...
+    user_id: int,
+    user: User,
+    session: T_session,
+    current_user: T_current_user,
+):
+    if current_user.id != user_id:
+        raise HTTPException(
+            # TODO arruma a mensagem
+            status_code=HTTPStatus.FORBIDDEN, detail='nao tem permissao'
+        )
+    try:
+        hashed = get_password_hash(user.password)
+        current_user.username = user.username
+        current_user.password = hashed
+        current_user.email = user.email
+        session.commit()
+        session.refresh(current_user)
+        return current_user
+    except IntegrityError:
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            # TODO arruma mensagem
+            detail='conflito de usuario ou email'
+        )
 
 
-@router.delete("/")
-def delete_user():
+@router.delete("/{user_id}", response_model=Message, tags=["user"])
+def delete_user(
+    user_id: int,
+    session: T_session,
+    current_user: T_current_user,
+):
     # TODO create: delete user func
-    ...
+    if current_user.id != user_id:
+        raise HTTPException(
+            # TODO arrumar a mensagem
+            status_code=HTTPStatus.FORBIDDEN, detail='sem permissao'
+        )
+    session.delete(current_user)
+    session.commit()
+    # TODO arrumar mensagem
+    return {'message': 'usuario deletado com sucesso'}

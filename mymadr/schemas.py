@@ -1,6 +1,10 @@
 from pydantic import BaseModel, EmailStr
 
 
+class Message(BaseModel):
+    message: str
+
+
 class UserBasic(BaseModel):
     username: str
     email: EmailStr
