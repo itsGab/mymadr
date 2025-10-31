@@ -44,7 +44,9 @@ def login_for_access_token(form_data: TokenForm, session: GetSession):
 
 
 @router.post("/refresh-token", response_model=Token, tags=["auth"])
-def refresh_token(): ...  # TODO fazer o refresh
+def refresh_access_token(current_user: GetCurrentUser):
+    new_access_token = create_access_token(data={'sub': current_user.email})
+    return {"access_token": new_access_token, "token_type": "bearer"}
 
 
 @router.post("/conta", response_model=UserPublic, tags=["user"])
@@ -75,9 +77,13 @@ def create_user(user: User, session: GetSession):
     return user_info
 
 
-@router.put("/conta/{user_id}", response_model=UserPublic, tags=["user"])
+@router.put(
+        "/conta/{user_id}",
+        response_model=UserPublic,
+        responses={HTTPStatus.FORBIDDEN: {"model": Message}},
+        tags=["user"]
+    )
 def update_user(
-    # TODO create: update user func
     user_id: int,
     user: UserOnUpdate,
     session: GetSession,
@@ -87,7 +93,7 @@ def update_user(
         raise HTTPException(
             # TODO arruma a mensagem
             status_code=HTTPStatus.FORBIDDEN,
-            detail="nao tem permissao",
+            detail="Não autorizado"
         )
     try:
         if user.username:
@@ -114,7 +120,6 @@ def delete_user(
     session: GetSession,
     current_user: GetCurrentUser,
 ):
-    # TODO create: delete user func
     if current_user.id != user_id:
         raise HTTPException(
             # TODO arrumar a mensagem
