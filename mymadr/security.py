@@ -18,7 +18,7 @@ settings = Settings()  # type: ignore
 
 pwd_context = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl='token', refreshUrl='token-refresh'
+    tokenUrl="token", refreshUrl="token-refresh"
 )
 TokenForm = Annotated[str, Depends(oauth2_scheme)]
 GetSession = Annotated[Session, Depends(get_session)]
@@ -30,14 +30,14 @@ def get_current_user(
 ):
     credential_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,
-        detail='usuario nao validado',  # TODO arrumar mensagem
-        headers={'WWW-Authenticate': 'Bearer'},
+        detail="usuario nao validado",  # TODO arrumar mensagem
+        headers={"WWW-Authenticate": "Bearer"},
     )
     try:
         payload = decode(
             jwt=token, key=settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        subject_email = payload.get('sub')
+        subject_email = payload.get("sub")
         if not subject_email:
             raise credential_exception
     except DecodeError:

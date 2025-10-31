@@ -38,6 +38,6 @@ def message_http_exception_handler(request: Request, exc: HTTPException):
     se encaixando no formato de saída esperado, Message, do schemas."""
     return JSONResponse(
         status_code=exc.status_code,
-        content={'message': exc.detail},
-        headers=getattr(exc, "headers", None)
+        content={"message": exc.detail},
+        headers=getattr(exc, "headers", None),
     )

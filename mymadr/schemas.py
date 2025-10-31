@@ -11,13 +11,12 @@ from pydantic import (
 
 
 def sanitizer(name: str) -> str:
-    name = re.sub(r'\s+', ' ', name.lower()).strip()
+    name = re.sub(r"\s+", " ", name.lower()).strip()
     return name
 
 
 SanitizedStr = Annotated[  # para fazer sanitização dos nomes
-    str,
-    AfterValidator(sanitizer)
+    str, AfterValidator(sanitizer)
 ]
 
 
