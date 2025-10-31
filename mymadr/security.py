@@ -12,7 +12,9 @@ from sqlalchemy.orm import Session
 
 from mymadr.database import get_session
 from mymadr.models import Account
-from mymadr.settings import settings
+from mymadr.settings import Settings
+
+settings = Settings()  # type: ignore
 
 pwd_context = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(

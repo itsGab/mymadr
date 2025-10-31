@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from mymadr.app import app
 from mymadr.models import table_registry
-from mymadr.settings import Settings
+from mymadr.settings import settings
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def client():
 
 @pytest.fixture
 def session():
-    engine = create_engine(Settings().DATABASE_URL)  # type: ignore
+    engine = create_engine(settings.DATABASE_URL)  # type: ignore
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
