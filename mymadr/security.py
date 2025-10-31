@@ -16,7 +16,7 @@ from mymadr.settings import settings
 
 pwd_context = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl='user/token', refreshUrl='user/token_refresh'
+    tokenUrl='token', refreshUrl='token-refresh'
 )
 TokenForm = Annotated[str, Depends(oauth2_scheme)]
 GetSession = Annotated[Session, Depends(get_session)]

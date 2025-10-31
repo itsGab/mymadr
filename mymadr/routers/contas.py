@@ -17,7 +17,7 @@ from mymadr.security import (
     verify_password,
 )
 
-router = APIRouter(prefix="/user")
+router = APIRouter()
 
 GetSession = Annotated[Session, Depends(get_session)]
 TokenForm = Annotated[OAuth2PasswordRequestForm, Depends()]
@@ -43,11 +43,11 @@ def login_for_access_token(form_data: TokenForm, session: GetSession):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/token_refresh", response_model=Token, tags=["auth"])
+@router.post("/refresh-token", response_model=Token, tags=["auth"])
 def refresh_token(): ...  # TODO fazer o refresh
 
 
-@router.post("/", response_model=UserPublic, tags=["user"])
+@router.post("/conta", response_model=UserPublic, tags=["user"])
 def create_user(user: User, session: GetSession):
     db_user = session.scalar(
         select(Account).where(
@@ -75,7 +75,7 @@ def create_user(user: User, session: GetSession):
     return user_info
 
 
-@router.put("/{user_id}", response_model=UserPublic, tags=["user"])
+@router.put("/conta/{user_id}", response_model=UserPublic, tags=["user"])
 def update_user(
     # TODO create: update user func
     user_id: int,
@@ -108,7 +108,7 @@ def update_user(
         )
 
 
-@router.delete("/{user_id}", response_model=Message, tags=["user"])
+@router.delete("/conta/{user_id}", response_model=Message, tags=["user"])
 def delete_user(
     user_id: int,
     session: GetSession,
