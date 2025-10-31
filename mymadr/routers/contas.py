@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from mymadr.database import get_session
 from mymadr.models import Account
-from mymadr.schemas import Message, Token, User, UserPublic
+from mymadr.schemas import Message, Token, User, UserOnUpdate, UserPublic
 from mymadr.security import (
     create_access_token,
     get_current_user,
@@ -79,7 +79,7 @@ def create_user(user: User, session: GetSession):
 def update_user(
     # TODO create: update user func
     user_id: int,
-    user: User,
+    user: UserOnUpdate,
     session: GetSession,
     current_user: GetCurrentUser,
 ):
@@ -90,10 +90,13 @@ def update_user(
             detail="nao tem permissao",
         )
     try:
-        hashed = get_password_hash(user.password.get_secret_value())
-        current_user.username = user.username
-        current_user.password = hashed
-        current_user.email = user.email
+        if user.username:
+            current_user.username = user.username
+        if user.email:
+            current_user.email = user.email
+        if user.password:
+            hashed = get_password_hash(user.password.get_secret_value())
+            current_user.password = hashed
         session.commit()
         session.refresh(current_user)
         return current_user

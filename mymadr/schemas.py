@@ -1,5 +1,5 @@
 import re
-from typing import Annotated
+from typing import Annotated, Optional
 
 from pydantic import (
     AfterValidator,
@@ -34,6 +34,12 @@ class UserBasic(BaseModel):
 
 class User(UserBasic):
     password: SecretStr
+
+
+class UserOnUpdate(BaseModel):
+    username: Optional[SanitizedStr] = None
+    email: Optional[EmailStr] = None
+    password: Optional[SecretStr] = None
 
 
 class UserPublic(UserBasic):
