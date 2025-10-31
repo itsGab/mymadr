@@ -1,4 +1,20 @@
-from pydantic import BaseModel, EmailStr
+from typing import Annotated
+
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    PositiveInt,
+    SecretStr,
+    StringConstraints,
+)
+
+SanitizedStr = Annotated[  # para fazer sanitização dos nomes
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        to_lower=True,
+    )
+]
 
 
 class Message(BaseModel):
@@ -6,12 +22,14 @@ class Message(BaseModel):
 
 
 class UserBasic(BaseModel):
-    username: str
+    # TODO: faz sentido usar o sanitized aqui?
+    # o username pode ter espaços, numero e simbolos?
+    username: SanitizedStr
     email: EmailStr
 
 
 class User(UserBasic):
-    password: str
+    password: SecretStr
 
 
 class UserPublic(UserBasic):
@@ -19,7 +37,7 @@ class UserPublic(UserBasic):
 
 
 class Romancista(BaseModel):
-    name: str
+    name: SanitizedStr
 
 
 class RomancistaPublic(Romancista):
@@ -31,9 +49,8 @@ class RomancistaList(BaseModel):
 
 
 class Livro(BaseModel):
-    # TODO: validacao no Ano do livro.
-    ano: int  # ??? Field(..., ge=0)
-    titulo: str
+    ano: PositiveInt  # ano não pode ser negativo!
+    titulo: SanitizedStr
     romancista_id: int
 
 
