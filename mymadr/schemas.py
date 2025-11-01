@@ -5,7 +5,6 @@ from pydantic import (
     AfterValidator,
     BaseModel,
     EmailStr,
-    PositiveInt,
     SecretStr,
 )
 
@@ -15,8 +14,16 @@ def sanitizer(name: str) -> str:
     return name
 
 
-SanitizedStr = Annotated[  # para fazer sanitização dos nomes
+def username_sanitizer(username: str) -> str:
+    return re.sub(r"[^\w]", "", username.lower())
+
+
+SanitizedName = Annotated[  # sanitização dos nomes
     str, AfterValidator(sanitizer)
+]
+
+SanitizedUsername = Annotated[  # sanitização dos nomes de usuário
+    str, AfterValidator(username_sanitizer)
 ]
 
 
@@ -25,9 +32,8 @@ class Message(BaseModel):
 
 
 class UserBasic(BaseModel):
-    # TODO: faz sentido usar o sanitized aqui?
-    # o username pode ter espaços, numero e simbolos?
-    username: SanitizedStr
+    # todo: raise error?
+    username: SanitizedUsername
     email: EmailStr
 
 
@@ -36,7 +42,7 @@ class UserSchema(UserBasic):
 
 
 class UserOnUpdate(BaseModel):
-    username: Optional[SanitizedStr] = None
+    username: Optional[SanitizedUsername] = None
     email: Optional[EmailStr] = None
     password: Optional[SecretStr] = None
 
@@ -46,7 +52,7 @@ class UserPublic(UserBasic):
 
 
 class Romancista(BaseModel):
-    name: SanitizedStr
+    name: SanitizedName
 
 
 class RomancistaPublic(Romancista):
@@ -54,12 +60,12 @@ class RomancistaPublic(Romancista):
 
 
 class RomancistaList(BaseModel):
-    romancistas: list[UserPublic]
+    romancistas: list[RomancistaPublic]
 
 
 class Livro(BaseModel):
-    ano: PositiveInt  # ano não pode ser negativo!
-    titulo: SanitizedStr
+    ano: int
+    titulo: SanitizedName
     romancista_id: int
 
 
