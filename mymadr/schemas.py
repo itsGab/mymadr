@@ -31,7 +31,7 @@ class UserBasic(BaseModel):
     email: EmailStr
 
 
-class User(UserBasic):
+class UserSchema(UserBasic):
     password: SecretStr
 
 

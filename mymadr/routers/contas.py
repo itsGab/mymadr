@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from mymadr.database import get_session
 from mymadr.models import Account
-from mymadr.schemas import Message, Token, User, UserOnUpdate, UserPublic
+from mymadr.schemas import Message, Token, UserOnUpdate, UserPublic, UserSchema
 from mymadr.security import (
     create_access_token,
     get_current_user,
@@ -65,7 +65,7 @@ def refresh_access_token(current_user: GetCurrentUser):
     responses={HTTPStatus.CONFLICT: {"model": Message}},
     tags=["user"],
 )
-def create_user(user: User, session: GetSession):
+def create_user(user: UserSchema, session: GetSession):
     hashed_password = get_password_hash(user.password.get_secret_value())
     user_info = Account(
         username=user.username, password=hashed_password, email=user.email
@@ -157,7 +157,6 @@ def delete_user(
 ):
     if current_user.id != user_id:
         raise HTTPException(
-            # TODO arrumar a mensagem
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="Não autorizado",
         )
