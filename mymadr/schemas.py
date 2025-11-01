@@ -51,11 +51,11 @@ class UserPublic(UserBasic):
     id: int
 
 
-class Novelist(BaseModel):
+class NovelistSchema(BaseModel):
     name: SanitizedName
 
 
-class NovelistPublic(Novelist):
+class NovelistPublic(NovelistSchema):
     id: int
 
 
@@ -63,13 +63,13 @@ class NovelistList(BaseModel):
     romancistas: list[NovelistPublic]
 
 
-class Book(BaseModel):
+class BookSchema(BaseModel):
     ano: int
     titulo: SanitizedName
     romancista_id: int
 
 
-class BookPublic(Book):
+class BookPublic(BookSchema):
     id: int
 
 

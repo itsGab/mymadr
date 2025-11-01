@@ -1,8 +1,8 @@
-"""create tables
+"""cria o banco
 
-Revision ID: abcbbe64077f
+Revision ID: b96d5573801f
 Revises:
-Create Date: 2025-10-28 19:12:11.380253
+Create Date: 2025-11-01 00:42:12.156279
 
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "abcbbe64077f"
+revision: str = "b96d5573801f"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

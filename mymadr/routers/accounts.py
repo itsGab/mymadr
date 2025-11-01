@@ -61,6 +61,7 @@ def refresh_access_token(current_user: GetCurrentUser):
 
 @router.post(
     "/conta",
+    status_code=HTTPStatus.CREATED,
     response_model=UserPublic,
     responses={HTTPStatus.CONFLICT: {"model": Message}},
     tags=["user"],
@@ -83,7 +84,7 @@ def create_user(user: UserSchema, session: GetSession):
         elif "email" in error_message:
             conflict_src = "Email"
         else:
-            conflict_src = None
+            conflict_src = None  # pragma: no cover
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail=(
@@ -96,6 +97,7 @@ def create_user(user: UserSchema, session: GetSession):
 
 @router.put(
     "/conta/{user_id}",
+    status_code=HTTPStatus.OK,
     response_model=UserPublic,
     responses={
         HTTPStatus.UNAUTHORIZED: {"model": Message},
@@ -109,7 +111,7 @@ def update_user(
     session: GetSession,
     current_user: GetCurrentUser,
 ):
-    if current_user and current_user.id != user_id:
+    if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="Não autorizado",
@@ -133,7 +135,7 @@ def update_user(
         elif "email" in error_message:
             conflict_src = "Email"
         else:
-            conflict_src = None
+            conflict_src = None  # pragma: no cover
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail=(
@@ -146,6 +148,7 @@ def update_user(
 
 @router.delete(
     "/conta/{user_id}",
+    status_code=HTTPStatus.OK,
     response_model=Message,
     responses={HTTPStatus.UNAUTHORIZED: {"model": Message}},
     tags=["user"],

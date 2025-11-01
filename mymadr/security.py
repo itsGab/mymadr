@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Annotated
+from typing import Annotated, Optional
 from zoneinfo import ZoneInfo
 
-from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, Request
+from fastapi.security import OAuth2PasswordBearer, utils
 from jwt import DecodeError, decode, encode
 from pwdlib import PasswordHash
 from sqlalchemy import select
@@ -16,9 +16,35 @@ from mymadr.settings import Settings
 
 settings = Settings()  # type: ignore
 
+
+class CustomOAuth2PasswordBearer(OAuth2PasswordBearer):
+    def __init__(
+        self, tokenUrl: str, custom_detail: str = "Not authenticated", **kwargs
+    ):
+        super().__init__(tokenUrl=tokenUrl, **kwargs)
+        self.custom_detail = custom_detail
+
+    async def __call__(self, request: Request):
+        authorization: Optional[str] = request.headers.get("Authorization")
+        scheme, _ = utils.get_authorization_scheme_param(authorization)
+        if not authorization or scheme.lower() != "bearer":
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                    detail=self.custom_detail,
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            else:
+                return None
+        return await super().__call__(request)
+
+
 pwd_context = PasswordHash.recommended()
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="token", refreshUrl="token-refresh"
+oauth2_scheme = CustomOAuth2PasswordBearer(
+    tokenUrl="token",
+    refreshUrl="token-refresh",
+    auto_error=True,
+    custom_detail="Não autorizado",
 )
 TokenForm = Annotated[str, Depends(oauth2_scheme)]
 GetSession = Annotated[Session, Depends(get_session)]
@@ -30,7 +56,7 @@ def get_current_user(
 ):
     credential_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,
-        detail="usuario nao validado",  # TODO arrumar mensagem
+        detail="Não autorizado",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
