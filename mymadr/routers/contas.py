@@ -24,20 +24,25 @@ TokenForm = Annotated[OAuth2PasswordRequestForm, Depends()]
 GetCurrentUser = Annotated[Account, Depends(get_current_user)]
 
 
-@router.post("/token", response_model=Token, tags=["auth"])
+@router.post(
+    "/token",
+    response_model=Token,
+    responses={HTTPStatus.BAD_REQUEST: {"model": Message}},
+    tags=["auth"],
+)
 def login_for_access_token(form_data: TokenForm, session: GetSession):
     user = session.scalar(
         select(Account).where(Account.email == form_data.username)
     )
-    if not user:  # email
+    if not user:
         raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail="USUARIO OU SENHA ERRADO",  # TODO arrumar mensagem
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Email ou senha incorretos",
         )
-    if not verify_password(form_data.password, user.password):  # senha
+    if not verify_password(form_data.password, user.password):
         raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail="USUARIO OU SENHA ERRADO",  # TODO arrumar mensagem
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Email ou senha incorretos",
         )
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
@@ -45,55 +50,69 @@ def login_for_access_token(form_data: TokenForm, session: GetSession):
 
 @router.post("/refresh-token", response_model=Token, tags=["auth"])
 def refresh_access_token(current_user: GetCurrentUser):
-    new_access_token = create_access_token(data={'sub': current_user.email})
+    if not current_user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Não autorizado",
+        )
+    new_access_token = create_access_token(data={"sub": current_user.email})
     return {"access_token": new_access_token, "token_type": "bearer"}
 
 
-@router.post("/conta", response_model=UserPublic, tags=["user"])
+@router.post(
+    "/conta",
+    response_model=UserPublic,
+    responses={HTTPStatus.CONFLICT: {"model": Message}},
+    tags=["user"],
+)
 def create_user(user: User, session: GetSession):
-    db_user = session.scalar(
-        select(Account).where(
-            (Account.username == user.username) | (Account.email == user.email)
-        )
-    )
-    if db_user:
-        if db_user.username == user.username:
-            raise HTTPException(
-                status_code=HTTPStatus.CONFLICT,
-                detail="USUARIO REPETIDO",  # TODO arrumar mensagem de erro
-            )
-        elif db_user.email == user.email:
-            raise HTTPException(
-                status_code=HTTPStatus.CONFLICT,
-                detail="EMAIL REPETIDO",  # TODO arrumar mensagem de erro
-            )
     hashed_password = get_password_hash(user.password.get_secret_value())
     user_info = Account(
         username=user.username, password=hashed_password, email=user.email
     )
-    session.add(user_info)
-    session.commit()
-    session.refresh(user_info)
-    return user_info
+    try:
+        session.add(user_info)
+        session.commit()
+        session.refresh(user_info)
+        return user_info
+    except IntegrityError as e:
+        session.rollback()
+        error_message = str(e.orig).lower()
+        if "username" in error_message:
+            conflict_src = "Nome de usuário"
+        elif "email" in error_message:
+            conflict_src = "Email"
+        else:
+            conflict_src = None
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail=(
+                f"{conflict_src} já consta no MADR"
+                if conflict_src
+                else "Conflito de dados no MADR (campo desconhecido)"
+            ),
+        )
 
 
 @router.put(
-        "/conta/{user_id}",
-        response_model=UserPublic,
-        responses={HTTPStatus.FORBIDDEN: {"model": Message}},
-        tags=["user"]
-    )
+    "/conta/{user_id}",
+    response_model=UserPublic,
+    responses={
+        HTTPStatus.UNAUTHORIZED: {"model": Message},
+        HTTPStatus.CONFLICT: {"model": Message},
+    },
+    tags=["user"],
+)
 def update_user(
     user_id: int,
     user: UserOnUpdate,
     session: GetSession,
     current_user: GetCurrentUser,
 ):
-    if current_user.id != user_id:
+    if current_user and current_user.id != user_id:
         raise HTTPException(
-            # TODO arruma a mensagem
-            status_code=HTTPStatus.FORBIDDEN,
-            detail="Não autorizado"
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Não autorizado",
         )
     try:
         if user.username:
@@ -106,15 +125,31 @@ def update_user(
         session.commit()
         session.refresh(current_user)
         return current_user
-    except IntegrityError:
+    except IntegrityError as e:
+        session.rollback()
+        error_message = str(e.orig).lower()
+        if "username" in error_message:
+            conflict_src = "Nome de usuário"
+        elif "email" in error_message:
+            conflict_src = "Email"
+        else:
+            conflict_src = None
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
-            # TODO arruma mensagem
-            detail="conflito de usuario ou email",
+            detail=(
+                f"{conflict_src} já consta no MADR"
+                if conflict_src
+                else "Conflito de dados no MADR (campo desconhecido)"
+            ),
         )
 
 
-@router.delete("/conta/{user_id}", response_model=Message, tags=["user"])
+@router.delete(
+    "/conta/{user_id}",
+    response_model=Message,
+    responses={HTTPStatus.UNAUTHORIZED: {"model": Message}},
+    tags=["user"],
+)
 def delete_user(
     user_id: int,
     session: GetSession,
@@ -123,10 +158,9 @@ def delete_user(
     if current_user.id != user_id:
         raise HTTPException(
             # TODO arrumar a mensagem
-            status_code=HTTPStatus.FORBIDDEN,
-            detail="sem permissao",
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Não autorizado",
         )
     session.delete(current_user)
     session.commit()
-    # TODO arrumar mensagem
-    return {"message": "usuario deletado com sucesso"}
+    return {"message": "Conta deletada com sucesso"}
