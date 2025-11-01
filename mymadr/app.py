@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from mymadr.routers import contas, livros, romancistas
+from mymadr.routers import accounts, books, novelist
 
 """ TODO revisar código
 
@@ -22,9 +22,9 @@ tags_metadata = [
 
 app = FastAPI(openapi_tags=tags_metadata)
 
-app.include_router(romancistas.router)
-app.include_router(livros.router)
-app.include_router(contas.router)
+app.include_router(novelist.router)
+app.include_router(books.router)
+app.include_router(accounts.router)
 
 
 @app.get("/")

@@ -51,30 +51,30 @@ class UserPublic(UserBasic):
     id: int
 
 
-class Romancista(BaseModel):
+class Novelist(BaseModel):
     name: SanitizedName
 
 
-class RomancistaPublic(Romancista):
+class NovelistPublic(Novelist):
     id: int
 
 
-class RomancistaList(BaseModel):
-    romancistas: list[RomancistaPublic]
+class NovelistList(BaseModel):
+    romancistas: list[NovelistPublic]
 
 
-class Livro(BaseModel):
+class Book(BaseModel):
     ano: int
     titulo: SanitizedName
     romancista_id: int
 
 
-class LivroPublic(Livro):
+class BookPublic(Book):
     id: int
 
 
-class LivroList(BaseModel):
-    livros: list[LivroPublic]
+class BookList(BaseModel):
+    livros: list[BookPublic]
 
 
 class Token(BaseModel):
