@@ -27,7 +27,7 @@ def test_create_username_conflict(client, user):
         "email": "new@mail.com",
         "password": "password",
     }
-    response = client.post("/conta", json=json_input)
+    response = client.post("/conta/", json=json_input)
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json() == {"message": "Nome de usuário já consta no MADR"}
 
@@ -38,7 +38,7 @@ def test_create_email_conflict(client, user):
         "email": user.email,
         "password": "password",
     }
-    response = client.post("/conta", json=json_input)
+    response = client.post("/conta/", json=json_input)
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json() == {"message": "Email já consta no MADR"}
 
