@@ -50,11 +50,6 @@ def login_for_access_token(form_data: TokenForm, session: GetSession):
 
 @router.post("/refresh-token", response_model=Token, tags=["auth"])
 def refresh_access_token(current_user: GetCurrentUser):
-    if not current_user:
-        raise HTTPException(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            detail="Não autorizado",
-        )
     new_access_token = create_access_token(data={"sub": current_user.email})
     return {"access_token": new_access_token, "token_type": "bearer"}
 
