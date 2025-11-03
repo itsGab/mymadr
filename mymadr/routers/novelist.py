@@ -10,10 +10,10 @@ from sqlalchemy.orm import Session
 from mymadr.models import Account, Author
 from mymadr.schemas import (
     Message,
-    NovelistPublic,
-    NovelistSchema,
     NovelistFilter,
     NovelistList,
+    NovelistPublic,
+    NovelistSchema,
 )
 from mymadr.security import get_current_user, get_session
 
@@ -85,9 +85,12 @@ def query_novelists(  # TODO paginar em 20
     novelist_filter: QueryFilter,
 ):
     novelists_list = session.scalars(
-        select(Author).where(Author.name.contains(novelist_filter.name))
+        select(Author)
+        .offset(novelist_filter.offset)
+        .limit(novelist_filter.limit)
+        .where(Author.name.contains(novelist_filter.name))
     )
-    return {'romancistas': novelists_list.all()}
+    return {"romancistas": novelists_list.all()}
 
 
 @router.patch(
