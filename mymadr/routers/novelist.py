@@ -43,17 +43,16 @@ def register_novelist(
         return novelist_info
     except IntegrityError as e:
         session.rollback()
-        error_message = str(e.orig).lower()
-        if "name" in error_message:
+        er_msg = str(e.orig).lower()
+        if "name" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
                 detail="Romancista já consta no MADR",
             )
-        else:
-            raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST,
-                detail="Erro ao cadastrar romancista",
-            )
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=f"Erro de integridade ao cadastrar romancista: ({er_msg})",
+        )
 
 
 @router.get(
@@ -67,11 +66,10 @@ def get_novelist(novelist_id: int, session: GetSession):
     )
     if romancista_db:
         return romancista_db
-    else:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail="Romancista não consta no MADR",
-        )
+    raise HTTPException(
+        status_code=HTTPStatus.NOT_FOUND,
+        detail="Romancista não consta no MADR",
+    )
 
 
 @router.get(
@@ -112,24 +110,22 @@ def update_novelist(
                 status_code=HTTPStatus.NOT_FOUND,
                 detail="Romancista não consta no MADR",
             )
-        else:
-            novelist_db.name = novelist.name
-            session.commit()
-            session.refresh(novelist_db)
-            return novelist_db
+        novelist_db.name = novelist.name
+        session.commit()
+        session.refresh(novelist_db)
+        return novelist_db
     except IntegrityError as e:
         session.rollback()
-        error_message = str(e.orig).lower()
-        if "name" in error_message:
+        er_msg = str(e.orig).lower()
+        if "name" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
                 detail="Romancista já consta no MADR",
             )
-        else:
-            raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST,
-                detail="Erro ao atualizar romancista",
-            )
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=f"Erro de integridade ao atualizar romancista: ({er_msg})",
+        )
 
 
 @router.delete(

@@ -73,20 +73,20 @@ def create_user(user: UserSchema, session: GetSession):
         return user_info
     except IntegrityError as e:
         session.rollback()
-        error_message = str(e.orig).lower()
-        if "username" in error_message:
+        er_msg = str(e.orig).lower()
+        conflict_src = None
+        if "username" in er_msg:
             conflict_src = "Nome de usuário"
-        elif "email" in error_message:
+        elif "email" in er_msg:
             conflict_src = "Email"
-        else:
-            conflict_src = None  # pragma: no cover
+        if conflict_src:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail=(f"{conflict_src} já consta no MADR"),
+            )
         raise HTTPException(
-            status_code=HTTPStatus.CONFLICT,
-            detail=(
-                f"{conflict_src} já consta no MADR"
-                if conflict_src
-                else "Conflito de dados no MADR (campo desconhecido)"
-            ),
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=f"Erro de integridade ao cadastrar usuário: ({er_msg})",
         )
 
 
@@ -124,20 +124,20 @@ def update_user(
         return current_user
     except IntegrityError as e:
         session.rollback()
-        error_message = str(e.orig).lower()
-        if "username" in error_message:
+        er_msg = str(e.orig).lower()
+        conflict_src = None
+        if "username" in er_msg:
             conflict_src = "Nome de usuário"
-        elif "email" in error_message:
+        elif "email" in er_msg:
             conflict_src = "Email"
-        else:
-            conflict_src = None  # pragma: no cover
+        if conflict_src:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail=(f"{conflict_src} já consta no MADR"),
+            )
         raise HTTPException(
-            status_code=HTTPStatus.CONFLICT,
-            detail=(
-                f"{conflict_src} já consta no MADR"
-                if conflict_src
-                else "Conflito de dados no MADR (campo desconhecido)"
-            ),
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=f"Erro de integridade ao cadastrar usuário: ({er_msg})",
         )
 
 
