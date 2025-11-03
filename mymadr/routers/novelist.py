@@ -1,14 +1,20 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from mymadr.models import Account, Author
-from mymadr.schemas import Message, NovelistPublic, NovelistSchema
+from mymadr.schemas import (
+    Message,
+    NovelistPublic,
+    NovelistSchema,
+    NovelistFilter,
+    NovelistList,
+)
 from mymadr.security import get_current_user, get_session
 
 router = APIRouter(prefix="/romancista", tags=["romancista"])
@@ -16,6 +22,7 @@ router = APIRouter(prefix="/romancista", tags=["romancista"])
 GetSession = Annotated[Session, Depends(get_session)]
 TokenForm = Annotated[OAuth2PasswordRequestForm, Depends()]
 GetCurrentUser = Annotated[Account, Depends(get_current_user)]
+QueryFilter = Annotated[NovelistFilter, Query()]
 
 
 @router.post(
@@ -68,8 +75,19 @@ def get_novelist(novelist_id: int, session: GetSession):
         )
 
 
-@router.get("/")  # TODO fazer funcao de busca
-def get_novelists(): ...
+@router.get(
+    "/",
+    status_code=HTTPStatus.OK,
+    response_model=NovelistList,
+)
+def query_novelists(  # TODO paginar em 20
+    session: GetSession,
+    novelist_filter: QueryFilter,
+):
+    novelists_list = session.scalars(
+        select(Author).where(Author.name.contains(novelist_filter.name))
+    )
+    return {'romancistas': novelists_list.all()}
 
 
 @router.patch(

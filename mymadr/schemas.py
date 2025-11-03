@@ -1,4 +1,5 @@
 import re
+from datetime import date
 from http import HTTPStatus
 from typing import Annotated, Optional
 
@@ -7,6 +8,7 @@ from pydantic import (
     AfterValidator,
     BaseModel,
     EmailStr,
+    Field,
     SecretStr,
     model_validator,
 )
@@ -32,6 +34,11 @@ SanitizedUsername = Annotated[  # sanitização dos nomes de usuário
 
 class Message(BaseModel):
     message: str
+
+
+class FilterPage(BaseModel):
+    offset: int = Field(0, ge=0)
+    limit: int = Field(100, ge=1)
 
 
 class UserBasic(BaseModel):
@@ -75,6 +82,10 @@ class NovelistList(BaseModel):
     romancistas: list[NovelistPublic]
 
 
+class NovelistFilter(FilterPage):
+    name: SanitizedName | None = Field(min_length=1, max_length=20)
+
+
 class BookSchema(BaseModel):
     ano: int
     titulo: SanitizedName
@@ -87,6 +98,13 @@ class BookPublic(BookSchema):
 
 class BookList(BaseModel):
     livros: list[BookPublic]
+
+
+class BookFilter(FilterPage):
+    # ano é menor que ano atual + 20 anos
+    ano: int | None = Field(None, le=date.today().year + 20)
+    titulo: SanitizedName | None = Field(None, min_length=3, max_length=20)
+    romancista_id: int | None = Field(None, gt=0)
 
 
 class Token(BaseModel):
