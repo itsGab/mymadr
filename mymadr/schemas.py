@@ -1,11 +1,14 @@
 import re
+from http import HTTPStatus
 from typing import Annotated, Optional
 
+from fastapi import HTTPException
 from pydantic import (
     AfterValidator,
     BaseModel,
     EmailStr,
     SecretStr,
+    model_validator,
 )
 
 
@@ -45,6 +48,15 @@ class UserOnUpdate(BaseModel):
     username: Optional[SanitizedUsername] = None
     email: Optional[EmailStr] = None
     password: Optional[SecretStr] = None
+
+    @model_validator(mode='after')
+    def check_at_least_one_filed(cls, values):
+        if not any([values.username, values.email, values.password]):
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail="Pelo menos um campo deve ser fornecido"
+            )
+        return values
 
 
 class UserPublic(UserBasic):
