@@ -19,7 +19,7 @@ class Book:
     __tablename__ = "books"
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    title: Mapped[str] = mapped_column()
+    title: Mapped[str] = mapped_column()  # TODO adicionar unique???
     year: Mapped[int] = mapped_column()
     author_id: Mapped[int] = mapped_column(ForeignKey("authors.id"))
     author: Mapped["Author"] = relationship(

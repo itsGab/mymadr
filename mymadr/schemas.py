@@ -51,12 +51,12 @@ class UserOnUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[SecretStr] = None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_at_least_one_filed(cls, values):
         if not any([values.username, values.email, values.password]):
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST,
-                detail="Pelo menos um campo deve ser fornecido"
+                detail="Pelo menos um campo deve ser fornecido",
             )
         return values
 
@@ -78,9 +78,9 @@ class NovelistList(BaseModel):
 
 
 class BookSchema(BaseModel):
-    ano: int
-    titulo: SanitizedName
-    romancista_id: int
+    year: int
+    title: SanitizedName
+    novelist_id: int
 
 
 class BookPublic(BookSchema):
@@ -114,7 +114,7 @@ class NovelistFilter(FilterPage):
 
 
 class BookFilter(FilterPage):
-    # ano é menor que ano atual + 20 anos
-    ano: int | None = Field(None, le=date.today().year + 20)
-    titulo: SanitizedName | None = Field(None, min_length=3, max_length=20)
-    romancista_id: int | None = Field(None, gt=0)
+    # ano tem que ser menor que ano atual + 20 anos
+    year: int | None = Field(None, le=date.today().year + 20)
+    title: SanitizedName | None = Field(None, min_length=3, max_length=20)
+    novelist_id: int | None = Field(None, gt=0)

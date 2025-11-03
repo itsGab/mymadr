@@ -2,11 +2,11 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from mymadr.database import get_session
 from mymadr.models import Account, Author
 from mymadr.schemas import (
     Message,
@@ -15,12 +15,11 @@ from mymadr.schemas import (
     NovelistPublic,
     NovelistSchema,
 )
-from mymadr.security import get_current_user, get_session
+from mymadr.security import get_current_user
 
 router = APIRouter(prefix="/romancista", tags=["romancista"])
 
 GetSession = Annotated[Session, Depends(get_session)]
-TokenForm = Annotated[OAuth2PasswordRequestForm, Depends()]
 GetCurrentUser = Annotated[Account, Depends(get_current_user)]
 QueryFilter = Annotated[NovelistFilter, Query()]
 
