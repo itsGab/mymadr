@@ -98,7 +98,7 @@ def test_update_password(client, user, token):
     json_output = {
         "username": user.username,
         "email": user.email,
-        "id": user.id
+        "id": user.id,
     }
     response = client.put(
         f"/conta/{user.id}",

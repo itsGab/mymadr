@@ -41,23 +41,23 @@ class Message(BaseModel):
 
 # --- accounts ---
 class UserBasic(BaseModel):
-    username: SanitizedUsername = Field(examples=['nome_de_usuario'])
+    username: SanitizedUsername = Field(examples=["nome_de_usuario"])
     email: EmailStr
 
     model_config = ConfigDict(populate_by_name=True)
 
 
 class UserSchema(UserBasic):
-    password: SecretStr = Field(..., alias='senha', examples=['senha'])
+    password: SecretStr = Field(..., alias="senha", examples=["senha"])
 
 
 class UserOnUpdate(BaseModel):
     username: Optional[SanitizedUsername] = Field(
-        None, examples=['nome_de_usuario']
+        None, examples=["nome_de_usuario"]
     )
     email: Optional[EmailStr] = None
     password: Optional[SecretStr] = Field(
-        None, alias='senha', examples=['senha']
+        None, alias="senha", examples=["senha"]
     )
 
     model_config = ConfigDict(populate_by_name=True)
