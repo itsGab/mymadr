@@ -25,40 +25,13 @@ GetCurrentUser = Annotated[Account, Depends(get_current_user)]
 
 
 @router.post(
-    "/token",
-    response_model=Token,
-    responses={HTTPStatus.BAD_REQUEST: {"model": Message}},
-    tags=["auth"],
-)
-def login_for_access_token(form_data: TokenForm, session: GetSession):
-    user = session.scalar(
-        select(Account).where(Account.email == form_data.username)
-    )
-    if not user:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail="Email ou senha incorretos",
-        )
-    if not verify_password(form_data.password, user.password):
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail="Email ou senha incorretos",
-        )
-    access_token = create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
-@router.post("/refresh-token", response_model=Token, tags=["auth"])
-def refresh_access_token(current_user: GetCurrentUser):
-    new_access_token = create_access_token(data={"sub": current_user.email})
-    return {"access_token": new_access_token, "token_type": "bearer"}
-
-
-@router.post(
     "/conta",
     status_code=HTTPStatus.CREATED,
     response_model=UserPublic,
-    responses={HTTPStatus.CONFLICT: {"model": Message}},
+    responses={
+        HTTPStatus.CONFLICT: {"model": Message},
+        HTTPStatus.BAD_REQUEST: {"model": Message},
+    },
     tags=["user"],
 )
 def create_user(user: UserSchema, session: GetSession):
@@ -69,25 +42,26 @@ def create_user(user: UserSchema, session: GetSession):
     try:
         session.add(user_info)
         session.commit()
-        session.refresh(user_info)
-        return user_info
     except IntegrityError as e:
         session.rollback()
         er_msg = str(e.orig).lower()
-        conflict_src = None
         if "username" in er_msg:
-            conflict_src = "Nome de usuário"
-        elif "email" in er_msg:
-            conflict_src = "Email"
-        if conflict_src:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail=(f"{conflict_src} já consta no MADR"),
+                detail="Nome de usuário já consta no MADR",
             )
-        raise HTTPException(
+        if "email" in er_msg:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail="Email já consta no MADR",
+            )
+        # trata qualquer IntegrityError inesperado
+        raise HTTPException(  # pragma: no cover
             status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Erro de integridade ao cadastrar usuário: ({er_msg})",
         )
+    session.refresh(user_info)
+    return user_info
 
 
 @router.put(
@@ -125,17 +99,18 @@ def update_user(
     except IntegrityError as e:
         session.rollback()
         er_msg = str(e.orig).lower()
-        conflict_src = None
         if "username" in er_msg:
-            conflict_src = "Nome de usuário"
-        elif "email" in er_msg:
-            conflict_src = "Email"
-        if conflict_src:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail=(f"{conflict_src} já consta no MADR"),
+                detail=("Nome de usuário já consta no MADR"),
             )
-        raise HTTPException(
+        if "email" in er_msg:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail=("Email já consta no MADR"),
+            )
+        # trata qualquer IntegrityError inesperado
+        raise HTTPException(  # pragma: no cover
             status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Erro de integridade ao cadastrar usuário: ({er_msg})",
         )
@@ -161,3 +136,33 @@ def delete_user(
     session.delete(current_user)
     session.commit()
     return {"message": "Conta deletada com sucesso"}
+
+
+@router.post(
+    "/token",
+    response_model=Token,
+    responses={HTTPStatus.BAD_REQUEST: {"model": Message}},
+    tags=["auth"],
+)
+def login_for_access_token(form_data: TokenForm, session: GetSession):
+    user = session.scalar(
+        select(Account).where(Account.email == form_data.username)
+    )
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Email ou senha incorretos",
+        )
+    if not verify_password(form_data.password, user.password):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Email ou senha incorretos",
+        )
+    access_token = create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/refresh-token", response_model=Token, tags=["auth"])
+def refresh_access_token(current_user: GetCurrentUser):
+    new_access_token = create_access_token(data={"sub": current_user.email})
+    return {"access_token": new_access_token, "token_type": "bearer"}

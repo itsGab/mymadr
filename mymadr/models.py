@@ -21,21 +21,21 @@ class Book:
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     title: Mapped[str] = mapped_column()  # TODO adicionar unique???
     year: Mapped[int] = mapped_column()
-    author_id: Mapped[int] = mapped_column(ForeignKey("authors.id"))
-    author: Mapped["Author"] = relationship(
+    novelist_id: Mapped[int] = mapped_column(ForeignKey("novelists.id"))
+    novelist: Mapped["Novelist"] = relationship(
         init=False,
         back_populates="books",
     )
 
 
 @table_registry.mapped_as_dataclass
-class Author:
-    __tablename__ = "authors"
+class Novelist:
+    __tablename__ = "novelists"
 
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     name: Mapped[str] = mapped_column(unique=True)
     books: Mapped[list["Book"]] = relationship(
         init=False,
-        back_populates="author",
+        back_populates="novelist",
         cascade="all, delete-orphan",
     )

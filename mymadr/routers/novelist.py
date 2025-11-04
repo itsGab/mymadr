@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from mymadr.database import get_session
-from mymadr.models import Account, Author
+from mymadr.models import Account, Novelist
 from mymadr.schemas import (
     Message,
     NovelistFilter,
@@ -35,7 +35,7 @@ def register_novelist(
     session: GetSession,
     current_user: GetCurrentUser,
 ):
-    novelist_info = Author(novelist.name)
+    novelist_info = Novelist(novelist.name)
     try:
         session.add(novelist_info)
         session.commit()
@@ -62,7 +62,7 @@ def register_novelist(
 )
 def get_novelist(novelist_id: int, session: GetSession):
     romancista_db = session.scalar(
-        select(Author).where(Author.id == novelist_id)
+        select(Novelist).where(Novelist.id == novelist_id)
     )
     if romancista_db:
         return romancista_db
@@ -77,17 +77,17 @@ def get_novelist(novelist_id: int, session: GetSession):
     status_code=HTTPStatus.OK,
     response_model=NovelistList,
 )
-def query_novelists(  # TODO paginar em 20
+def query_novelists(
     session: GetSession,
     novelist_filter: QueryFilter,
 ):
     novelists_list = session.scalars(
-        select(Author)
+        select(Novelist)
         .offset(novelist_filter.offset)
         .limit(novelist_filter.limit)
-        .where(Author.name.contains(novelist_filter.name))
+        .where(Novelist.name.contains(novelist_filter.name))
     )
-    return {"romancistas": novelists_list.all()}
+    return {"livros": novelists_list.all()}
 
 
 @router.patch(
@@ -103,7 +103,7 @@ def update_novelist(
 ):
     try:
         novelist_db = session.scalar(
-            select(Author).where(Author.id == novelist_id)
+            select(Novelist).where(Novelist.id == novelist_id)
         )
         if not novelist_db:
             raise HTTPException(
@@ -140,7 +140,7 @@ def delete_novelist(
 ):
     try:
         novelist_db = session.scalar(
-            select(Author).where(Author.id == novelist_id)
+            select(Novelist).where(Novelist.id == novelist_id)
         )
         session.delete(novelist_db)
         session.commit()
@@ -149,5 +149,5 @@ def delete_novelist(
         session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail="Erro ao deletar romancista",
+            detail="Erro ao deletar romancista do MADR",
         )

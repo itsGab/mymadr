@@ -6,7 +6,7 @@ def test_create_new_user(client):
     json_input = {
         "username": "new_user",
         "email": "new@mail.com",
-        "password": "password",
+        "senha": "password",
     }
     json_output = {
         "id": 1,
@@ -25,7 +25,7 @@ def test_create_username_conflict(client, user):
     json_input = {
         "username": user.username,
         "email": "new@mail.com",
-        "password": "password",
+        "senha": "password",
     }
     response = client.post("/conta/", json=json_input)
     assert response.status_code == HTTPStatus.CONFLICT
@@ -36,7 +36,7 @@ def test_create_email_conflict(client, user):
     json_input = {
         "username": "new_user",
         "email": user.email,
-        "password": "password",
+        "senha": "password",
     }
     response = client.post("/conta/", json=json_input)
     assert response.status_code == HTTPStatus.CONFLICT
@@ -47,7 +47,7 @@ def test_update_all_fields(client, user, token):
     json_input = {
         "username": "updated",
         "email": "updated@mail.com",
-        "password": "updated",
+        "senha": "updated",
     }
     json_output = {"username": "updated", "email": "updated@mail.com", "id": 1}
     response = client.put(
@@ -80,7 +80,7 @@ def test_update_email(client, user, token):
     json_output = {
         "username": user.username,
         "email": "updated@mail.com",
-        "id": 1,
+        "id": user.id,
     }
     response = client.put(
         f"/conta/{user.id}",
@@ -93,18 +93,19 @@ def test_update_email(client, user, token):
 
 def test_update_password(client, user, token):
     json_input = {
-        "password": "updated",
+        "senha": "updated",
     }
-    # json_output = {
-    #     "username": "updated",
-    #     "email": "updated@mail.com",
-    #     "id": 1
-    # }
+    json_output = {
+        "username": user.username,
+        "email": user.email,
+        "id": user.id
+    }
     response = client.put(
         f"/conta/{user.id}",
         headers={"Authorization": f"Bearer {token}"},
         json=json_input,
     )
+    assert response.json() == json_output
     assert response.status_code == HTTPStatus.OK
     # FIXME adicionar passo para verificar se loga
 
@@ -182,8 +183,8 @@ def test_token(client, user):
         "/token/",
         data={"username": user.email, "password": user.clean_password},
     )
-    assert response.status_code == HTTPStatus.OK
     assert response.json()["token_type"] == "bearer"
+    assert response.status_code == HTTPStatus.OK
 
 
 def test_token_invalid_email(client, user):
