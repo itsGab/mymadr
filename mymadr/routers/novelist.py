@@ -28,7 +28,7 @@ QueryFilter = Annotated[NovelistFilter, Query()]
     "/",
     status_code=HTTPStatus.CREATED,
     response_model=NovelistPublic,
-    responses={},  # TODO adicionar os erros
+    responses={HTTPStatus.CONFLICT: {"model": Message}},
 )
 def register_novelist(
     novelist: NovelistSchema,
@@ -59,6 +59,7 @@ def register_novelist(
     "/{novelist_id}",
     status_code=HTTPStatus.OK,
     response_model=NovelistPublic,
+    responses={HTTPStatus.NOT_FOUND: {"model": Message}},
 )
 def get_novelist(novelist_id: int, session: GetSession):
     romancista_db = session.scalar(
@@ -94,6 +95,11 @@ def query_novelists(
     "/{novelist_id}",
     status_code=HTTPStatus.OK,
     response_model=NovelistPublic,
+    responses={
+        HTTPStatus.NOT_FOUND: {"model": Message},
+        HTTPStatus.CONFLICT: {"model": Message},
+        HTTPStatus.BAD_REQUEST: {"model": Message},
+    },
 )
 def update_novelist(
     novelist_id: int,
@@ -132,6 +138,7 @@ def update_novelist(
     "/{novelist_id}",
     status_code=HTTPStatus.OK,
     response_model=Message,
+    responses={HTTPStatus.BAD_REQUEST: {"model": Message}},
 )
 def delete_novelist(
     novelist_id: int,

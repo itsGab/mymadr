@@ -29,11 +29,15 @@ QueryFilter = Annotated[BookFilter, Query()]
     "/",
     status_code=HTTPStatus.CREATED,
     response_model=BookPublic,
+    responses={
+        HTTPStatus.NOT_FOUND: {"model": Message},
+        HTTPStatus.BAD_REQUEST: {"model": Message},
+    }
 )
 def register_book(
     book: BookSchema,
     session: GetSession,
-    # current_user: GetCurrentUser,
+    current_user: GetCurrentUser,
 ):
     novelist = session.scalar(
         select(Novelist).where(Novelist.id == book.novelist_id)
@@ -65,12 +69,17 @@ def register_book(
         )
 
 
-@router.get("/{book_id}", status_code=HTTPStatus.OK, response_model=BookPublic)
+@router.get(
+    "/{book_id}",
+    status_code=HTTPStatus.OK,
+    response_model=BookPublic,
+    responses={HTTPStatus.NOT_FOUND: {"model": Message}}
+)
 def get_book(book_id: int, session: GetSession):
     book_db = session.scalar(select(Book).where(Book.id == book_id))
     if not book_db:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
+            status_code=HTTPStatus.NOT_FOUND,
             detail="Livro não consta no MADR",
         )
     return book_db
@@ -80,7 +89,6 @@ def get_book(book_id: int, session: GetSession):
     "/query/",
     status_code=HTTPStatus.OK,
     response_model=BookList,
-    responses={HTTPStatus.BAD_REQUEST: {"model": Message}},
 )
 def query_books(session: GetSession, book_filter: QueryFilter):
     query = select(Book)
@@ -96,14 +104,18 @@ def query_books(session: GetSession, book_filter: QueryFilter):
     return {"livros": books_list.all()}
 
 
-@router.patch("/{book_id}", status_code=HTTPStatus.OK)
+@router.patch(
+    "/{book_id}",
+    status_code=HTTPStatus.OK,
+    response_model=BookPublic,
+    responses={HTTPStatus.BAD_REQUEST: {"model": Message}}
+)
 def update_book(
     book_id: int,
     book: BookOnUpdate,
     session: GetSession,
-    # current_user: GetCurrentUser
+    current_user: GetCurrentUser
 ):
-    # return book.model_dump(exclude_unset=True)
     book_db = session.scalar(select(Book).where(Book.id == book_id))
     if not book_db:
         raise HTTPException(
@@ -114,12 +126,6 @@ def update_book(
         book_info = book.model_dump(exclude_unset=True)
         for field, value in book_info.items():
             setattr(book_db, field, value)
-        # if book.title:
-        #     book_db.title = book.title
-        # if book.year:
-        #     book_db.year = book.year
-        # if book.novelist_id:
-        #     book_db.novelist_id = book.novelist_id
         session.commit()
         session.refresh(book_db)
         return book_db
@@ -127,7 +133,7 @@ def update_book(
         session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
-            detail="algo deu ruim",  # TODO arrumar erro
+            detail="Erro de integridade ao atualizar livro: ({er_msg})",
         )
 
 
@@ -135,11 +141,12 @@ def update_book(
     "/{book_id}",
     status_code=HTTPStatus.OK,
     response_model=Message,
+    responses={HTTPStatus.BAD_REQUEST: {"model": Message}}
 )
 def delete_book(
     book_id: int,
     session: GetSession,
-    # current_user: GetCurrentUser,
+    current_user: GetCurrentUser,
 ):
     try:
         book_db = session.scalar(select(Book).where(Book.id == book_id))

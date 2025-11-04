@@ -24,13 +24,14 @@ TokenForm = Annotated[OAuth2PasswordRequestForm, Depends()]
 GetCurrentUser = Annotated[Account, Depends(get_current_user)]
 
 
+# --- conta ---
 @router.post(
     "/conta",
     status_code=HTTPStatus.CREATED,
     response_model=UserPublic,
     responses={
-        HTTPStatus.CONFLICT: {"model": Message},
         HTTPStatus.BAD_REQUEST: {"model": Message},
+        HTTPStatus.CONFLICT: {"model": Message},
     },
     tags=["user"],
 )
@@ -71,6 +72,7 @@ def create_user(user: UserSchema, session: GetSession):
     responses={
         HTTPStatus.UNAUTHORIZED: {"model": Message},
         HTTPStatus.CONFLICT: {"model": Message},
+        HTTPStatus.BAD_REQUEST: {"model": Message},
     },
     tags=["user"],
 )
@@ -138,6 +140,7 @@ def delete_user(
     return {"message": "Conta deletada com sucesso"}
 
 
+# --- auth ---
 @router.post(
     "/token",
     response_model=Token,
