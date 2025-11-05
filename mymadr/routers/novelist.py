@@ -49,7 +49,8 @@ def register_novelist(
                 status_code=HTTPStatus.CONFLICT,
                 detail="Romancista já consta no MADR",
             )
-        raise HTTPException(
+        # trata qualquer IntegrityError inesperado
+        raise HTTPException(  # pragma: no cover
             status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Erro de integridade ao cadastrar romancista: ({er_msg})",
         )
@@ -82,13 +83,13 @@ def query_novelists(
     session: GetSession,
     novelist_filter: QueryFilter,
 ):
+    query = select(Novelist)
+    if novelist_filter.name:
+        query = query.filter(Novelist.name.contains(novelist_filter.name))
     novelists_list = session.scalars(
-        select(Novelist)
-        .offset(novelist_filter.offset)
-        .limit(novelist_filter.limit)
-        .where(Novelist.name.contains(novelist_filter.name))
+        query.offset(novelist_filter.offset).limit(novelist_filter.limit)
     )
-    return {"livros": novelists_list.all()}
+    return {"romancistas": novelists_list.all()}
 
 
 @router.patch(
@@ -128,7 +129,8 @@ def update_novelist(
                 status_code=HTTPStatus.CONFLICT,
                 detail="Romancista já consta no MADR",
             )
-        raise HTTPException(
+        # trata qualquer IntegrityError inesperado
+        raise HTTPException(  # pragma: no cover
             status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Erro de integridade ao atualizar romancista: ({er_msg})",
         )
@@ -154,7 +156,8 @@ def delete_novelist(
         return {"message": "Romancista deletado no MADR"}
     except IntegrityError:
         session.rollback()
-        raise HTTPException(
+        # trata qualquer IntegrityError inesperado
+        raise HTTPException(  # pragma: no cover
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Erro ao deletar romancista do MADR",
         )

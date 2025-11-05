@@ -58,12 +58,17 @@ def register_book(
     except IntegrityError as er:
         session.rollback()
         er_msg = str(er.orig).lower()
+
+        """FIXME a checagem no novelist.id pra ver se existe esta acontecendo
+        no comeco da funcao, por aqui nao funciona. eu nao sei se eh por causa
+        do sqlite, lembre de testar novamente quando migrar para postgres"""
+
         if "novelist_id" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
                 detail="Romancista não consta no MADR",
             )
-        raise HTTPException(
+        raise HTTPException(  # pragma: no cover
             status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Erro de integridade ao cadastrar livro: ({er_msg})",
         )

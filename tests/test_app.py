@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from mymadr.app import app
 
 
-def test_app():
+def test_app_success():
     client = TestClient(app)
     response = client.get("/")
     assert response.status_code == HTTPStatus.OK
