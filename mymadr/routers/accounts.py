@@ -88,13 +88,13 @@ def update_user(
             detail="Não autorizado",
         )
     try:
-        if user.username:
-            current_user.username = user.username
-        if user.email:
-            current_user.email = user.email
-        if user.password:
-            hashed = get_password_hash(user.password.get_secret_value())
-            current_user.password = hashed
+        user_info = user.model_dump(exclude_unset=True)
+        for field, value in user_info.items():
+            if field == "password":
+                hashed_password = get_password_hash(value.get_secret_value())
+                setattr(current_user, field, hashed_password)
+                continue
+            setattr(current_user, field, value)
         session.commit()
         session.refresh(current_user)
         return current_user
