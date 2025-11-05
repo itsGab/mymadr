@@ -32,7 +32,7 @@ QueryFilter = Annotated[BookFilter, Query()]
     responses={
         HTTPStatus.NOT_FOUND: {"model": Message},
         HTTPStatus.BAD_REQUEST: {"model": Message},
-    }
+    },
 )
 def register_book(
     book: BookSchema,
@@ -73,7 +73,7 @@ def register_book(
     "/{book_id}",
     status_code=HTTPStatus.OK,
     response_model=BookPublic,
-    responses={HTTPStatus.NOT_FOUND: {"model": Message}}
+    responses={HTTPStatus.NOT_FOUND: {"model": Message}},
 )
 def get_book(book_id: int, session: GetSession):
     book_db = session.scalar(select(Book).where(Book.id == book_id))
@@ -108,13 +108,13 @@ def query_books(session: GetSession, book_filter: QueryFilter):
     "/{book_id}",
     status_code=HTTPStatus.OK,
     response_model=BookPublic,
-    responses={HTTPStatus.BAD_REQUEST: {"model": Message}}
+    responses={HTTPStatus.BAD_REQUEST: {"model": Message}},
 )
 def update_book(
     book_id: int,
     book: BookOnUpdate,
     session: GetSession,
-    current_user: GetCurrentUser
+    current_user: GetCurrentUser,
 ):
     book_db = session.scalar(select(Book).where(Book.id == book_id))
     if not book_db:
@@ -141,7 +141,7 @@ def update_book(
     "/{book_id}",
     status_code=HTTPStatus.OK,
     response_model=Message,
-    responses={HTTPStatus.BAD_REQUEST: {"model": Message}}
+    responses={HTTPStatus.BAD_REQUEST: {"model": Message}},
 )
 def delete_book(
     book_id: int,
