@@ -51,6 +51,10 @@ class UserSchema(UserBasic):
     password: SecretStr = Field(..., alias="senha", examples=["senha"])
 
 
+class UserPublic(UserBasic):
+    id: int
+
+
 class UserOnUpdate(BaseModel):
     username: Optional[SanitizedUsername] = Field(
         None, examples=["nome_de_usuario"]
@@ -72,13 +76,11 @@ class UserOnUpdate(BaseModel):
         return self
 
 
-class UserPublic(UserBasic):
-    id: int
-
-
 # --- novelists ---
 class NovelistSchema(BaseModel):
-    name: SanitizedName
+    name: SanitizedName = Field(alias="nome")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class NovelistPublic(NovelistSchema):
@@ -86,20 +88,24 @@ class NovelistPublic(NovelistSchema):
 
 
 class NovelistList(BaseModel):
-    romancistas: list[NovelistPublic]
+    novelists: list[NovelistPublic] = Field(alias="romancistas")
 
 
 # --- books ---
 class BookSchema(BaseModel):
-    title: str
-    year: int
-    novelist_id: int
+    title: str = Field(alias="titulo")
+    year: int = Field(alias="ano")
+    novelist_id: int = Field(alias="romancista_id")
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class BookOnUpdate(BaseModel):
-    year: Optional[int] = None
-    title: Optional[SanitizedName] = None
-    novelist_id: Optional[int] = None
+    title: Optional[SanitizedName] = Field(None, alias="titulo")
+    year: Optional[int] = Field(None, alias="ano")
+    novelist_id: Optional[int] = Field(None, alias="romancista_id")
+
+    model_config = ConfigDict(populate_by_name=True)
 
     @model_validator(mode="after")
     def check_valid_field(self) -> Self:
@@ -116,7 +122,7 @@ class BookPublic(BookSchema):
 
 
 class BookList(BaseModel):
-    livros: list[BookPublic]
+    books: list[BookPublic] = Field(alias="livros")
 
 
 # --- auth ---
@@ -146,8 +152,8 @@ class FilterPagination(BaseModel):
         return (self.page_number - 1) * self._page_size
 
 
-class NovelistFilter(FilterPage):
-    name: SanitizedName | None = Field(min_length=1, max_length=20)
+class NovelistFilter(FilterPagination):
+    name: Optional[SanitizedName] = Field(None, min_length=1, max_length=50)
 
 
 class BookFilter(FilterPagination):
