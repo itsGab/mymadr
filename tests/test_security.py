@@ -31,30 +31,33 @@ def test_jwt_invalid_token(client, user):
     assert response.json() == {"message": "Não autorizado"}
 
 
-def test_get_current_user_exception_decode_error_unauthorized(session):
+@pytest.mark.asyncio
+async def test_get_current_user_exception_decode_error_unauthorized(session):
     # test case for JWT token error (or decode error)
     with pytest.raises(HTTPException) as exc:
-        get_current_user(session, token="invalid-token")
+        await get_current_user(session, token="invalid-token")
     assert exc.value.status_code == HTTPStatus.UNAUTHORIZED
     assert exc.value.detail == "Não autorizado"
 
 
-def test_current_user_exception_user_is_none_unauthorized(session):
+@pytest.mark.asyncio
+async def test_current_user_exception_user_is_none_unauthorized(session):
     # test case for user not found in the database
     data_no_username = {"sub": "test@test"}
     token = create_access_token(data_no_username)
     with pytest.raises(HTTPException) as exc:
-        get_current_user(session, token)
+        await get_current_user(session, token)
     assert exc.value.status_code == HTTPStatus.UNAUTHORIZED
     assert exc.value.detail == "Não autorizado"
 
 
-def test_current_user_exception_no_username_unauthorized(session):
+@pytest.mark.asyncio
+async def test_current_user_exception_no_username_unauthorized(session):
     # test case for missing 'sub' in the payload
     data_user_none = {"test": "test"}
     token = create_access_token(data_user_none)
     with pytest.raises(HTTPException) as exc:
-        get_current_user(session, token)
+        await get_current_user(session, token)
     assert exc.value.status_code == HTTPStatus.UNAUTHORIZED
     assert exc.value.detail == "Não autorizado"
 

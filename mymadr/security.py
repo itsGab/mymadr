@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer, utils
 from jwt import DecodeError, decode, encode
 from pwdlib import PasswordHash
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mymadr.database import get_session
 from mymadr.models import Account
@@ -45,10 +45,10 @@ oauth2_scheme = CustomOAuth2PasswordBearer(
     custom_detail="Não autorizado",
 )
 TokenForm = Annotated[str, Depends(oauth2_scheme)]
-GetSession = Annotated[Session, Depends(get_session)]
+GetSession = Annotated[AsyncSession, Depends(get_session)]
 
 
-def get_current_user(
+async def get_current_user(
     session: GetSession,
     token: TokenForm,
 ):
@@ -66,7 +66,7 @@ def get_current_user(
             raise credential_exception
     except DecodeError:
         raise credential_exception
-    user = session.scalar(
+    user = await session.scalar(
         select(Account).where(Account.email == subject_email)
     )
     if not user:

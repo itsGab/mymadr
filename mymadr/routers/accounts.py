@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mymadr.database import get_session
 from mymadr.models import Account
@@ -19,7 +19,7 @@ from mymadr.security import (
 
 router = APIRouter()
 
-GetSession = Annotated[Session, Depends(get_session)]
+GetSession = Annotated[AsyncSession, Depends(get_session)]
 TokenForm = Annotated[OAuth2PasswordRequestForm, Depends()]
 GetCurrentUser = Annotated[Account, Depends(get_current_user)]
 
@@ -35,16 +35,16 @@ GetCurrentUser = Annotated[Account, Depends(get_current_user)]
     },
     tags=["user"],
 )
-def create_user(user: UserSchema, session: GetSession):
+async def create_user(user: UserSchema, session: GetSession):
     hashed_password = get_password_hash(user.password.get_secret_value())
     user_info = Account(
         username=user.username, password=hashed_password, email=user.email
     )
     try:
         session.add(user_info)
-        session.commit()
+        await session.commit()
     except IntegrityError as e:
-        session.rollback()
+        await session.rollback()
         er_msg = str(e.orig).lower()
         if "username" in er_msg:
             raise HTTPException(
@@ -61,7 +61,7 @@ def create_user(user: UserSchema, session: GetSession):
             status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Erro de integridade ao cadastrar usuário: ({er_msg})",
         )
-    session.refresh(user_info)
+    await session.refresh(user_info)
     return user_info
 
 
@@ -76,7 +76,7 @@ def create_user(user: UserSchema, session: GetSession):
     },
     tags=["user"],
 )
-def update_user(
+async def update_user(
     user_id: int,
     user: UserOnUpdate,
     session: GetSession,
@@ -95,11 +95,11 @@ def update_user(
                 setattr(current_user, field, hashed_password)
                 continue
             setattr(current_user, field, value)
-        session.commit()
-        session.refresh(current_user)
+        await session.commit()
+        await session.refresh(current_user)
         return current_user
     except IntegrityError as e:
-        session.rollback()
+        await session.rollback()
         er_msg = str(e.orig).lower()
         if "username" in er_msg:
             raise HTTPException(
@@ -125,7 +125,7 @@ def update_user(
     responses={HTTPStatus.UNAUTHORIZED: {"model": Message}},
     tags=["user"],
 )
-def delete_user(
+async def delete_user(
     user_id: int,
     session: GetSession,
     current_user: GetCurrentUser,
@@ -135,8 +135,8 @@ def delete_user(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail="Não autorizado",
         )
-    session.delete(current_user)
-    session.commit()
+    await session.delete(current_user)
+    await session.commit()
     return {"message": "Conta deletada com sucesso"}
 
 
@@ -147,8 +147,8 @@ def delete_user(
     responses={HTTPStatus.BAD_REQUEST: {"model": Message}},
     tags=["auth"],
 )
-def login_for_access_token(form_data: TokenForm, session: GetSession):
-    user = session.scalar(
+async def login_for_access_token(form_data: TokenForm, session: GetSession):
+    user = await session.scalar(
         select(Account).where(Account.email == form_data.username)
     )
     if not user:

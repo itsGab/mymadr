@@ -1,7 +1,7 @@
-import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
-from sqlalchemy import StaticPool, create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy import StaticPool
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from mymadr.app import app
 from mymadr.database import get_session
@@ -9,9 +9,9 @@ from mymadr.models import Account, Book, Novelist, table_registry
 from mymadr.security import get_password_hash
 
 
-@pytest.fixture
-def client(session):
-    def get_session_override():
+@pytest_asyncio.fixture
+async def client(session):
+    async def get_session_override():
         return session
 
     with TestClient(app) as client:
@@ -21,24 +21,25 @@ def client(session):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
-def session():
-    engine = create_engine(
-        "sqlite:///:memory:",
+@pytest_asyncio.fixture
+async def session():
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    table_registry.metadata.create_all(engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(table_registry.metadata.create_all)
 
-    with Session(engine) as session:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
         yield session
 
-    table_registry.metadata.drop_all(engine)
-    engine.dispose()
+    async with engine.begin() as conn:
+        await conn.run_sync(table_registry.metadata.drop_all)
 
 
-@pytest.fixture
-def user(session):
+@pytest_asyncio.fixture
+async def user(session):
     password = "password123"
     user = Account(
         username="usuario01",
@@ -46,14 +47,14 @@ def user(session):
         password=get_password_hash(password),  # type: ignore
     )
     session.add(user)
-    session.commit()
-    session.refresh(user)
+    await session.commit()
+    await session.refresh(user)
     user.clean_password = password  # type: ignore
     return user
 
 
-@pytest.fixture
-def other_user(session):
+@pytest_asyncio.fixture
+async def other_user(session):
     password = "password321"
     user = Account(
         username="usuario02",
@@ -61,14 +62,14 @@ def other_user(session):
         password=get_password_hash(password),  # type: ignore
     )
     session.add(user)
-    session.commit()
-    session.refresh(user)
+    await session.commit()
+    await session.refresh(user)
     user.clean_password = password  # type: ignore
     return user
 
 
-@pytest.fixture
-def token(client, user):
+@pytest_asyncio.fixture
+async def token(client, user):
     response = client.post(
         "/token",
         data={
@@ -79,8 +80,8 @@ def token(client, user):
     return response.json()["access_token"]
 
 
-@pytest.fixture
-def other_token(client, other_user):
+@pytest_asyncio.fixture
+async def other_token(client, other_user):
     response = client.post(
         "/token",
         data={
@@ -91,58 +92,58 @@ def other_token(client, other_user):
     return response.json()["access_token"]
 
 
-@pytest.fixture
-def novelist(session):
+@pytest_asyncio.fixture
+async def novelist(session):
     novelist = Novelist(name="machado de assis")
     session.add(novelist)
-    session.commit()
-    session.refresh(novelist)
+    await session.commit()
+    await session.refresh(novelist)
     return novelist
 
 
-@pytest.fixture
-def other_novelist(session):
+@pytest_asyncio.fixture
+async def other_novelist(session):
     novelist = Novelist(name="maria firmina dos reis")
     session.add(novelist)
-    session.commit()
-    session.refresh(novelist)
+    await session.commit()
+    await session.refresh(novelist)
     return novelist
 
 
-@pytest.fixture
-def book1(session, novelist):
+@pytest_asyncio.fixture
+async def book1(session, novelist):
     book = Book(
         title="dom casmurro",
         year=1899,
         novelist_id=novelist.id,
     )
     session.add(book)
-    session.commit()
-    session.refresh(book)
+    await session.commit()
+    await session.refresh(book)
     return book
 
 
-@pytest.fixture
-def book2(session, novelist):
+@pytest_asyncio.fixture
+async def book2(session, novelist):
     book = Book(
         title="missa do galo",
         year=1893,
         novelist_id=novelist.id,
     )
     session.add(book)
-    session.commit()
-    session.refresh(book)
+    await session.commit()
+    await session.refresh(book)
     return book
 
 
-@pytest.fixture
-def book3(session, other_novelist):
+@pytest_asyncio.fixture
+async def book3(session, other_novelist):
     book = Book(
         title="úrsula",
         year=1859,
         novelist_id=other_novelist.id,
     )
     session.add(book)
-    session.commit()
-    session.refresh(book)
+    await session.commit()
+    await session.refresh(book)
     return book
