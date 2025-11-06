@@ -34,8 +34,6 @@ class CustomOAuth2PasswordBearer(OAuth2PasswordBearer):
                     detail=self.custom_detail,
                     headers={"WWW-Authenticate": "Bearer"},
                 )
-            else:
-                return None
         return await super().__call__(request)
 
 

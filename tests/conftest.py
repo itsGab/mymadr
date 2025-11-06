@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from mymadr.app import app
 from mymadr.database import get_session
-from mymadr.models import Account, table_registry
+from mymadr.models import Account, Book, Novelist, table_registry
 from mymadr.security import get_password_hash
 
 
@@ -89,3 +89,60 @@ def other_token(client, other_user):
         },
     )
     return response.json()["access_token"]
+
+
+@pytest.fixture
+def novelist(session):
+    novelist = Novelist(name="machado de assis")
+    session.add(novelist)
+    session.commit()
+    session.refresh(novelist)
+    return novelist
+
+
+@pytest.fixture
+def other_novelist(session):
+    novelist = Novelist(name="maria firmina dos reis")
+    session.add(novelist)
+    session.commit()
+    session.refresh(novelist)
+    return novelist
+
+
+@pytest.fixture
+def book1(session, novelist):
+    book = Book(
+        title="dom casmurro",
+        year=1899,
+        novelist_id=novelist.id,
+    )
+    session.add(book)
+    session.commit()
+    session.refresh(book)
+    return book
+
+
+@pytest.fixture
+def book2(session, novelist):
+    book = Book(
+        title="missa do galo",
+        year=1893,
+        novelist_id=novelist.id,
+    )
+    session.add(book)
+    session.commit()
+    session.refresh(book)
+    return book
+
+
+@pytest.fixture
+def book3(session, other_novelist):
+    book = Book(
+        title="úrsula",
+        year=1859,
+        novelist_id=other_novelist.id,
+    )
+    session.add(book)
+    session.commit()
+    session.refresh(book)
+    return book

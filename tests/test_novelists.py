@@ -1,17 +1,215 @@
+from http import HTTPStatus
 
-""" LISTANDO TESTES:
-register novelist success
-register novelist with existing novelist conflict
-get novelist by id success
-get novelist by id when novelist does not exist not found
-query novelist by partial name success
-query novelists by partial name success
-query novelists no matches returns empty list
-query novelists with more than 20 novelists pagination success
-update novelist sucess
-update novelist when novelist does not exist not found
-update novelist with existing novelist name conflict
-delete novelist success
-delete novelist with other novelist id unauthorized
-delete novelist not authenticated unauthorized
-"""
+
+def test_register_novelist_success(client, token):
+    json_input = {"nome": "   j.    k. rowling"}
+    json_output = {"nome": "j. k. rowling", "id": 1}
+    response = client.post(
+        "/romancista/",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    assert response.json() == json_output
+
+
+def test_register_novelist_with_existing_novelist_conflict(
+    client, novelist, token
+):
+    json_input = {"nome": novelist.name}
+    response = client.post(
+        "/romancista/",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {"message": "Romancista já consta no MADR"}
+
+
+def test_get_novelist_by_id_success(client, novelist):
+    response = client.get(f"/romancista/{novelist.id}")
+    json_output = {"nome": novelist.name, "id": novelist.id}
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == json_output
+
+
+def test_get_novelist_by_id_when_novelist_does_not_exist_not_found(
+    client, novelist
+):
+    response = client.get(f"/romancista/{novelist.id + 1}")
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {"message": "Romancista não consta no MADR"}
+
+
+def test_query_novelist_by_partial_name_success(client, novelist):
+    partial_name = " assis"  # for 'machado de assis'
+    response = client.get(f"romancista/?name={partial_name}")
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        "romancistas": [{"nome": novelist.name, "id": novelist.id}]
+    }
+
+
+def test_query_novelists_by_partial_name_success(
+    client, novelist, other_novelist
+):
+    partial_name = "ma"  # for 'machado' and 'maria'
+    response = client.get(f"romancista/?name={partial_name}")
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        "romancistas": [
+            {"nome": novelist.name, "id": novelist.id},
+            {"nome": other_novelist.name, "id": other_novelist.id},
+        ]
+    }
+
+
+def test_query_novelists_no_matches_returns_empty_list(
+    client, novelist, other_novelist
+):
+    name = "monteiro"
+    response = client.get(f"romancista/?nome={name}")
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"romancistas": []}
+
+
+def test_query_novelists_with_more_than_20_novelists_pagination_success():
+    # TODO implement
+    ...
+
+
+def test_query_novelist_by_not_implemented_field_not_allowed():
+    # TODO implement / melhorar nome
+    ...
+
+
+def test_update_novelist_sucess(client, novelist, token):
+    json_input = {"nome": "monteiro lobato"}
+    response = client.patch(
+        f"romancista/{novelist.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"nome": "monteiro lobato", "id": novelist.id}
+
+
+def test_update_novelist_when_novelist_does_not_exist_not_found(
+    client, novelist, token
+):
+    json_input = {"nome": "monteiro lobato"}
+    response = client.patch(
+        f"romancista/{novelist.id + 1}",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {"message": "Romancista não consta no MADR"}
+
+
+def test_update_novelist_with_existing_novelist_name_conflict(
+    client, novelist, other_novelist, token
+):
+    json_input = {"nome": other_novelist.name}
+    response = client.patch(
+        f"romancista/{novelist.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {"message": "Romancista já consta no MADR"}
+
+
+def test_update_novelist_with_own_novelist_name_success(
+    client, novelist, token
+):
+    json_input = {"nome": novelist.name}
+    response = client.patch(
+        f"romancista/{novelist.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"nome": novelist.name, "id": novelist.id}
+
+
+def test_update_novelist_not_authenticated_unauthorized(client, novelist):
+    json_input = {"nome": novelist.name}
+    response = client.patch(
+        f"romancista/{novelist.id}",
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {"message": "Não autorizado"}
+
+
+def test_update_novelist_with_invalid_token_unauthorized(client, novelist):
+    json_input = {"nome": novelist.name}
+    response = client.patch(
+        f"romancista/{novelist.id}",
+        headers={"Authorization": "Bearer invalid token"},
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {"message": "Não autorizado"}
+
+
+def test_delete_novelist_success(client, novelist, token):
+    response = client.delete(
+        f"romancista/{novelist.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"message": "Romancista deletado no MADR"}
+
+
+def test_delete_novelist_not_authenticated_unauthorized(client, novelist):
+    response = client.delete(
+        f"romancista/{novelist.id}",
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {"message": "Não autorizado"}
+
+
+def test_delete_novelist_with_invalid_token_unauthorized(client, novelist):
+    response = client.delete(
+        f"romancista/{novelist.id}",
+        headers={"Authorization": "Bearer invalid token"},
+    )
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {"message": "Não autorizado"}
+
+
+def test_delete_novelist_also_deletes_their_books_success(
+    client, novelist, book1, book2, token
+):
+    # verify if books exist
+    response = client.get(f"livro/?romancista_id={novelist.id}")
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        "livros": [
+            {
+                "titulo": book1.title,
+                "ano": book1.year,
+                "id": book1.id,
+                "romancista_id": book1.novelist_id,
+            },
+            {
+                "titulo": book2.title,
+                "ano": book2.year,
+                "id": book2.id,
+                "romancista_id": book2.novelist_id,
+            },
+        ]
+    }
+    # delete novelist
+    response = client.delete(
+        f"romancista/{novelist.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"message": "Romancista deletado no MADR"}
+    # verify if books were deleted
+    response = client.get(f"livro/?romancista_id={novelist.id}")
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"livros": []}

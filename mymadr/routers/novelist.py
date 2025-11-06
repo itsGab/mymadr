@@ -154,10 +154,10 @@ def delete_novelist(
         session.delete(novelist_db)
         session.commit()
         return {"message": "Romancista deletado no MADR"}
-    except IntegrityError:
+    # trata qualquer IntegrityError inesperado
+    except IntegrityError:  # pragma: no cover
         session.rollback()
-        # trata qualquer IntegrityError inesperado
-        raise HTTPException(  # pragma: no cover
+        raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Erro ao deletar romancista do MADR",
         )

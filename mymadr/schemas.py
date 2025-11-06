@@ -119,6 +119,7 @@ class BookOnUpdate(BaseModel):
 
 class BookPublic(BookSchema):
     id: int
+    # TODO faz sentido colocar no novelist por nome aqui?
 
 
 class BookList(BaseModel):
@@ -140,7 +141,7 @@ class FilterPage(BaseModel):
 
 # BY PAGES OF 20
 class FilterPagination(BaseModel):
-    page_number: int = Field(1, ge=1, lt=50)
+    page: int = Field(1, ge=1, lt=50, alias="pagina")
     _page_size: int = 20
 
     @property
@@ -149,21 +150,30 @@ class FilterPagination(BaseModel):
 
     @property
     def offset(self) -> int:
-        return (self.page_number - 1) * self._page_size
+        return (self.page - 1) * self._page_size
 
 
 class NovelistFilter(FilterPagination):
-    name: Optional[SanitizedName] = Field(None, min_length=1, max_length=50)
+    name: Optional[SanitizedName] = Field(
+        None, min_length=1, max_length=50, alias="nome"
+    )
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class BookFilter(FilterPagination):
-    year: int | None = Field(None, le=date.today().year + 20)
-    title: SanitizedName | None = Field(None, min_length=1, max_length=20)
-    novelist_id: int | None = Field(None, gt=0)
+    year: int | None = Field(None, le=date.today().year + 20, alias="ano")
+    title: SanitizedName | None = Field(
+        None, min_length=1, max_length=20, alias="titulo"
+    )
+    novelist_id: int | None = Field(None, gt=0, alias="romancista_id")
 
-    _valid_fields: bool = False  # check for at least one filled field
+    model_config = ConfigDict(populate_by_name=True)
 
-    @model_validator(mode="after")
+    # when True checks for at least one filled field
+    _valid_fields: bool = False
+
+    @model_validator(mode="after")  # pragma: no cover
     def check_valid_field(self) -> Self:
         if self._valid_fields:
             if not any([self.year, self.title, self.novelist_id]):

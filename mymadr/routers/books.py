@@ -55,19 +55,19 @@ def register_book(
         session.commit()
         session.refresh(book_info)
         return book_info
-    except IntegrityError as er:
-        session.rollback()
-        er_msg = str(er.orig).lower()
-
+    except IntegrityError as er:  # pragma: no cover
         """FIXME a checagem no novelist.id pra ver se existe esta acontecendo
         no comeco da funcao, por aqui nao funciona. eu nao sei se eh por causa
         do sqlite, lembre de testar novamente quando migrar para postgres"""
 
+        session.rollback()
+        er_msg = str(er.orig).lower()
         if "novelist_id" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
                 detail="Romancista não consta no MADR",
             )
+        # trata qualquer IntegrityError inesperado
         raise HTTPException(  # pragma: no cover
             status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Erro de integridade ao cadastrar livro: ({er_msg})",
@@ -91,7 +91,7 @@ def get_book(book_id: int, session: GetSession):
 
 
 @router.get(
-    "/query/",
+    "/",
     status_code=HTTPStatus.OK,
     response_model=BookList,
 )
@@ -113,7 +113,10 @@ def query_books(session: GetSession, book_filter: QueryFilter):
     "/{book_id}",
     status_code=HTTPStatus.OK,
     response_model=BookPublic,
-    responses={HTTPStatus.BAD_REQUEST: {"model": Message}},
+    responses={
+        HTTPStatus.NOT_FOUND: {"model": Message},
+        HTTPStatus.CONFLICT: {"model": Message},
+    },
 )
 def update_book(
     book_id: int,
@@ -124,9 +127,18 @@ def update_book(
     book_db = session.scalar(select(Book).where(Book.id == book_id))
     if not book_db:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
+            status_code=HTTPStatus.NOT_FOUND,
             detail="Livro não consta no MADR",
         )
+    if book.novelist_id is not None:
+        romancista_db = session.scalar(
+            select(Novelist).where(Novelist.id == book.novelist_id)
+        )
+        if not romancista_db:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail="Romancista não consta no MADR",
+            )
     try:
         book_info = book.model_dump(exclude_unset=True)
         for field, value in book_info.items():
@@ -134,11 +146,13 @@ def update_book(
         session.commit()
         session.refresh(book_db)
         return book_db
-    except IntegrityError:
+    except IntegrityError as e:  # pragma: no cover
         session.rollback()
+        er_msg = str(e.orig).lower()
+        # trata qualquer IntegrityError inesperado
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
-            detail="Erro de integridade ao atualizar livro: ({er_msg})",
+            detail=f"Erro de integridade ao atualizar livro: ({er_msg})",
         )
 
 
@@ -158,7 +172,9 @@ def delete_book(
         session.delete(book_db)
         session.commit()
         return {"message": "Livro deletado do MADR"}
-    except IntegrityError:
+    except IntegrityError:  # pragma: no cover
+        session.rollback()
+        # trata qualquer IntegrityError inesperado
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Erro ao deletar livro do MADR",
