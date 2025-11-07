@@ -204,7 +204,7 @@ async def test_delete_novelist_also_deletes_their_books_success(
     # verify if all books as registered
     response = client.get("livro/?")
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["livros"] == (
+    assert len(response.json()["livros"]) == (
         books_novelist_quantity + books_other_novelist_quantity
     )
     # verify if books exist

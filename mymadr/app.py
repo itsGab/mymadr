@@ -15,8 +15,10 @@ e.g.:
 
 # TODO definir se vai usar!
 tags_metadata = [
-    {"name": "user", "description": "Usuarios"},
-    {"name": "auth", "description": "Autorizacoes!!!"},
+    {"name": "conta", "description": "Gerenciamento de contas"},
+    {"name": "romancista", "description": "Gerenciamento de romancistas"},
+    {"name": "livro", "description": "Gerenciamento de livros"},
+    {"name": "auth", "description": "Autorizações"},
 ]
 
 
@@ -27,7 +29,7 @@ app.include_router(books.router)
 app.include_router(accounts.router)
 
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
 def read_root():
     return {"message": "Hello there!"}
 

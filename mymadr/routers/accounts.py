@@ -33,7 +33,7 @@ GetCurrentUser = Annotated[Account, Depends(get_current_user)]
         HTTPStatus.BAD_REQUEST: {"model": Message},
         HTTPStatus.CONFLICT: {"model": Message},
     },
-    tags=["user"],
+    tags=["conta"],
 )
 async def create_user(user: UserSchema, session: GetSession):
     hashed_password = get_password_hash(user.password.get_secret_value())
@@ -74,7 +74,7 @@ async def create_user(user: UserSchema, session: GetSession):
         HTTPStatus.CONFLICT: {"model": Message},
         HTTPStatus.BAD_REQUEST: {"model": Message},
     },
-    tags=["user"],
+    tags=["conta"],
 )
 async def update_user(
     user_id: int,
@@ -123,7 +123,7 @@ async def update_user(
     status_code=HTTPStatus.OK,
     response_model=Message,
     responses={HTTPStatus.UNAUTHORIZED: {"model": Message}},
-    tags=["user"],
+    tags=["conta"],
 )
 async def delete_user(
     user_id: int,

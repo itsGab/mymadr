@@ -1,9 +1,4 @@
 FALTA:
-- add responses para os erros dos endpoints
+- mudar para o postgres
 - escrever os testes
     - test_cenarios
-    - test_books
-    - test_novelists
-    - test_security
-    - test_
-- mudar para o postgres
