@@ -1,5 +1,9 @@
 from http import HTTPStatus
 
+import pytest
+
+from tests.factories import BookFactory
+
 
 def test_register_novelist_success(client, token):
     json_input = {"nome": "   j.    k. rowling"}
@@ -180,28 +184,33 @@ def test_delete_novelist_with_invalid_token_unauthorized(client, novelist):
     assert response.json() == {"message": "Não autorizado"}
 
 
-def test_delete_novelist_also_deletes_their_books_success(
-    client, novelist, book1, book2, token
+@pytest.mark.asyncio
+async def test_delete_novelist_also_deletes_their_books_success(
+    session, client, novelist, other_novelist, token
 ):
+    # register books by novelist
+    books_novelist_quantity = 3
+    books_novelist = BookFactory.create_batch(
+        books_novelist_quantity, novelist_id=novelist.id
+    )
+    session.add_all(books_novelist)
+    await session.commit()
+    books_other_novelist_quantity = 2
+    books_other_novelist = BookFactory.create_batch(
+        books_other_novelist_quantity, novelist_id=other_novelist.id
+    )
+    session.add_all(books_other_novelist)
+    await session.commit()
+    # verify if all books as registered
+    response = client.get("livro/?")
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["livros"] == (
+        books_novelist_quantity + books_other_novelist_quantity
+    )
     # verify if books exist
     response = client.get(f"livro/?romancista_id={novelist.id}")
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        "livros": [
-            {
-                "titulo": book1.title,
-                "ano": book1.year,
-                "id": book1.id,
-                "romancista_id": book1.novelist_id,
-            },
-            {
-                "titulo": book2.title,
-                "ano": book2.year,
-                "id": book2.id,
-                "romancista_id": book2.novelist_id,
-            },
-        ]
-    }
+    assert len(response.json()["livros"]) == books_novelist_quantity
     # delete novelist
     response = client.delete(
         f"romancista/{novelist.id}",
@@ -213,3 +222,7 @@ def test_delete_novelist_also_deletes_their_books_success(
     response = client.get(f"livro/?romancista_id={novelist.id}")
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"livros": []}
+    # verify if books by other novelist
+    response = client.get(f"livro/?romancista_id={other_novelist.id}")
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()["livros"]) == books_other_novelist_quantity
