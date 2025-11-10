@@ -331,9 +331,41 @@ async def test_book_pagination_size_second_page_returns_10_of_30_books(
     assert len(response.json()["livros"]) == len_expected
 
 
-def test_book_title_sanitization_on_registry():
-    ...  # TODO implementar teste
+def test_book_title_sanitization_on_registry(client, token, novelist):
+    title_unprocessed = "  tHE  Title     "
+    title_processed = "the title"
+    json_input = {
+        "titulo": title_unprocessed,
+        "ano": 2025,
+        "romancista_id": novelist.id,
+    }
+    json_output = {
+        "titulo": title_processed,
+        "ano": 2025,
+        "romancista_id": novelist.id,
+        "id": 1,
+    }
+    response = client.post(
+        "livro", headers={"Authorization": f"Bearer {token}"}, json=json_input
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    assert response.json() == json_output
 
 
-def test_book_title_sanitization_on_update():
-    ...  # TODO implementar teste
+def test_book_title_sanitization_on_update(client, book1, token, novelist):
+    title_unprocessed = "  tHE  Title     "
+    title_processed = "the title"
+    json_input = {"titulo": title_unprocessed}
+    json_output = {
+        "titulo": title_processed,
+        "ano": book1.year,
+        "romancista_id": novelist.id,
+        "id": book1.id,
+    }
+    response = client.patch(
+        f"livro/{book1.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.json() == json_output
+    assert response.status_code == HTTPStatus.OK

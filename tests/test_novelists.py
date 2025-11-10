@@ -218,9 +218,29 @@ async def test_delete_novelist_also_deletes_their_books_success(
     assert len(response.json()["livros"]) == books_other_novelist_quantity
 
 
-async def test_novelist_name_sanitization_on_registry():
-    ...  # TODO implementar teste
+def test_novelist_name_sanitization_on_registry(client, token):
+    name_unprocessed = "    novELIst    NaMe   "
+    name_processed = "novelist name"
+    json_input = {"nome": name_unprocessed}
+    json_output = {"nome": name_processed, "id": 1}
+    response = client.post(
+        "romancista/",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    assert response.json() == json_output
 
 
-async def test_novelist_name_sanitization_on_update():
-    ...  # TODO implementar teste
+def test_novelist_name_sanitization_on_update(client, token, novelist):
+    name_unprocessed = "    novELIst    NaMe   "
+    name_processed = "novelist name"
+    json_input = {"nome": name_unprocessed}
+    json_output = {"nome": name_processed, "id": novelist.id}
+    response = client.patch(
+        f"romancista/{novelist.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == json_output

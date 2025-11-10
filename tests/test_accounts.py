@@ -254,9 +254,67 @@ def test_refresh_token_with_no_token_unauthorized(client):
     assert response.json() == {"message": "Não autorizado"}
 
 
-def test_account_username_sanitization_on_registry():
-    ...  # TODO implementar teste
+def test_account_username_sanitization_on_registry(client):
+    name_unprocessed = "      User        NamE   "
+    name_processed = "username"
+    json_input = {
+        "username": name_unprocessed,
+        "email": "email@mail.com",
+        "senha": "senha",
+    }
+    json_output = {
+        "username": name_processed,
+        "email": "email@mail.com",
+        "id": 1,
+    }
+    response = client.post("/conta", json=json_input)
+    assert response.status_code == HTTPStatus.CREATED
+    assert response.json() == json_output
 
 
-def test_account_username_sanitization_on_update():
-    ...  # TODO implementar teste
+def test_account_username_sanitization_on_update(client, user, token):
+    name_unprocessed = "   nEW _  User        NamE   "
+    name_processed = "new_username"
+    json_input = {
+        "username": name_unprocessed,
+        "email": "email@mail.com",
+        "senha": "senha",
+    }
+    json_output = {
+        "username": name_processed,
+        "email": "email@mail.com",
+        "id": 1,
+    }
+    response = client.put(
+        f"/conta/{user.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.json() == json_output
+    assert response.status_code == HTTPStatus.OK
+
+
+def test_create_account_with_invalid_email_(client):
+    invalid_email = "invalid_email"
+    json_input = {
+        "username": "username",
+        "email": invalid_email,
+        "senha": "senha",
+    }
+    response = client.post("/conta", json=json_input)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert "is not a valid email" in response.json()["detail"][0]["msg"]
+
+
+def test_update_account_with_invalid_email_(client, user, token):
+    invalid_email = "invalid_email"
+    json_input = {
+        "email": invalid_email,
+    }
+    response = client.put(
+        f"/conta/{user.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json=json_input,
+    )
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert "is not a valid email" in response.json()["detail"][0]["msg"]
