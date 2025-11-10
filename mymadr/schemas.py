@@ -16,21 +16,21 @@ from pydantic import (
 
 
 # --- funções de sanitização e annotated ---
-def sanitizer(name: str) -> str:
+def str_sanitizer(name: str) -> str:
     name = re.sub(r"\s+", " ", name.lower()).strip()
     return name
 
 
-def username_sanitizer(username: str) -> str:
+def user_sanitizer(username: str) -> str:
     return re.sub(r"[^\w]", "", username.lower())
 
 
-SanitizedName = Annotated[  # sanitização dos nomes
-    str, AfterValidator(sanitizer)
+SanitizedString = Annotated[  # sanitização dos nomes
+    str, AfterValidator(str_sanitizer)
 ]
 
 SanitizedUsername = Annotated[  # sanitização dos nomes de usuário
-    str, AfterValidator(username_sanitizer)
+    str, AfterValidator(user_sanitizer)
 ]
 
 
@@ -78,7 +78,7 @@ class UserOnUpdate(BaseModel):
 
 # --- novelists ---
 class NovelistSchema(BaseModel):
-    name: SanitizedName = Field(alias="nome")
+    name: SanitizedString = Field(alias="nome")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -93,7 +93,7 @@ class NovelistList(BaseModel):
 
 # --- books ---
 class BookSchema(BaseModel):
-    title: str = Field(alias="titulo")
+    title: SanitizedString = Field(alias="titulo")
     year: int = Field(alias="ano")
     novelist_id: int = Field(alias="romancista_id")
 
@@ -101,7 +101,7 @@ class BookSchema(BaseModel):
 
 
 class BookOnUpdate(BaseModel):
-    title: Optional[SanitizedName] = Field(None, alias="titulo")
+    title: Optional[SanitizedString] = Field(None, alias="titulo")
     year: Optional[int] = Field(None, alias="ano")
     novelist_id: Optional[int] = Field(None, alias="romancista_id")
 
@@ -119,7 +119,6 @@ class BookOnUpdate(BaseModel):
 
 class BookPublic(BookSchema):
     id: int
-    # TODO faz sentido colocar no novelist por nome aqui?
 
 
 class BookList(BaseModel):
@@ -154,7 +153,7 @@ class FilterPagination(BaseModel):
 
 
 class NovelistFilter(FilterPagination):
-    name: Optional[SanitizedName] = Field(
+    name: Optional[SanitizedString] = Field(
         None, min_length=1, max_length=50, alias="nome"
     )
 
@@ -163,7 +162,7 @@ class NovelistFilter(FilterPagination):
 
 class BookFilter(FilterPagination):
     year: int | None = Field(None, le=date.today().year + 20, alias="ano")
-    title: SanitizedName | None = Field(
+    title: SanitizedString | None = Field(
         None, min_length=1, max_length=20, alias="titulo"
     )
     novelist_id: int | None = Field(None, gt=0, alias="romancista_id")

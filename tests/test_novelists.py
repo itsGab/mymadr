@@ -77,16 +77,6 @@ def test_query_novelists_no_matches_returns_empty_list(
     assert response.json() == {"romancistas": []}
 
 
-def test_query_novelists_with_more_than_20_novelists_pagination_success():
-    # TODO implement
-    ...
-
-
-def test_query_novelist_by_not_implemented_field_not_allowed():
-    # TODO implement / melhorar nome
-    ...
-
-
 def test_update_novelist_sucess(client, novelist, token):
     json_input = {"nome": "monteiro lobato"}
     response = client.patch(
@@ -226,3 +216,11 @@ async def test_delete_novelist_also_deletes_their_books_success(
     response = client.get(f"livro/?romancista_id={other_novelist.id}")
     assert response.status_code == HTTPStatus.OK
     assert len(response.json()["livros"]) == books_other_novelist_quantity
+
+
+async def test_novelist_name_sanitization_on_registry():
+    ...  # TODO implementar teste
+
+
+async def test_novelist_name_sanitization_on_update():
+    ...  # TODO implementar teste

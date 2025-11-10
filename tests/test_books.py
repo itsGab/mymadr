@@ -5,43 +5,6 @@ import pytest
 from tests.factories import BookFactory
 
 
-@pytest.mark.asyncio
-async def test_book_pagination_size_first_page_returns_20_of_30_books(
-    session, client
-):
-    """test pagination (max size 20 books per page):
-    has 30 books
-    expects 20 of 30 books in response
-    """
-    books_quantity = 30
-    default_page_size = 20
-    len_expected = default_page_size
-    session.add_all(BookFactory.create_batch(books_quantity))
-    await session.commit()
-    response = client.get("livro/?")  # <- page not provided
-    assert response.status_code == HTTPStatus.OK
-    assert len(response.json()["livros"]) == len_expected
-
-
-@pytest.mark.asyncio
-async def test_book_pagination_size_second_page_returns_10_of_30_books(
-    session, client
-):
-    """test pagination - 2nd page (max size 20 books per page):
-    has 30 books
-    expects 10 of 30 books in response
-    """
-    books_quantity = 30
-    default_page_size = 20
-    page = 2
-    len_expected = books_quantity - default_page_size
-    session.add_all(BookFactory.create_batch(books_quantity))
-    await session.commit()
-    response = client.get(f"livro/?pagina={page}")
-    assert response.status_code == HTTPStatus.OK
-    assert len(response.json()["livros"]) == len_expected
-
-
 def test_register_book_success(client, novelist, token):
     json_input = {
         "titulo": "memórias póstumas de brás cubas",
@@ -327,3 +290,50 @@ def test_delete_book_invalid_token_unauthorized(client, book1):
     )
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response.json() == {"message": "Não autorizado"}
+
+
+@pytest.mark.asyncio
+async def test_book_pagination_size_first_page_returns_20_of_30_books(
+    session, client, novelist
+):
+    """test pagination (max size 20 books per page):
+    has 30 books
+    expects 20 of 30 books in response
+    """
+    books_quantity = 30
+    default_page_size = 20
+    len_expected = default_page_size
+    session.add_all(
+        BookFactory.create_batch(books_quantity, novelist_id=novelist.id)
+    )
+    await session.commit()
+    response = client.get("livro/?")  # <- page not provided
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()["livros"]) == len_expected
+
+
+@pytest.mark.asyncio
+async def test_book_pagination_size_second_page_returns_10_of_30_books(
+    session, client, novelist
+):
+    """test pagination - 2nd page (max size 20 books per page):
+    has 30 books
+    expects 10 of 30 books in response
+    """
+    books_quantity = 30
+    default_page_size = 20
+    page = 2
+    len_expected = books_quantity - default_page_size
+    session.add_all(BookFactory.create_batch(books_quantity))
+    await session.commit()
+    response = client.get(f"livro/?pagina={page}")
+    assert response.status_code == HTTPStatus.OK
+    assert len(response.json()["livros"]) == len_expected
+
+
+def test_book_title_sanitization_on_registry():
+    ...  # TODO implementar teste
+
+
+def test_book_title_sanitization_on_update():
+    ...  # TODO implementar teste

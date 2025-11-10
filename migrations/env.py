@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from logging.config import fileConfig
 
 from alembic import context
@@ -7,6 +8,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from mymadr.models import table_registry
 from mymadr.settings import settings
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)  # type: ignore

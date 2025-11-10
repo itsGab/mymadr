@@ -1,0 +1,32 @@
+services:
+  madr_database:
+    image: postgres:18
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d app_db -h localhost -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - pgdata:/var/lib/postgresql
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_DB: app_db
+      POSTGRES_PASSWORD: app_password
+    ports:
+      - "5432:5432"
+
+  madr_app:
+    image: madr_app
+    entrypoint: ./entrypoint.sh
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      madr_database:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://app_user:app_password@madr_database:5432/app_db
+
+volumes:
+  pgdata:

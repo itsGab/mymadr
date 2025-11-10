@@ -1,19 +1,14 @@
+import asyncio
+import sys
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from mymadr.routers import accounts, books, novelist
 
-""" TODO revisar código
+if sys.platform == "win32":  # pragma: no cover
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-Revisar todo o código para ver o que vale a pena ou nao fazer um relatório
-sobre.
-
-e.g.:
-- @app.exception_handler -> para se adequar a `response` esperada.
-
-"""
-
-# TODO definir se vai usar!
 tags_metadata = [
     {"name": "conta", "description": "Gerenciamento de contas"},
     {"name": "romancista", "description": "Gerenciamento de romancistas"},

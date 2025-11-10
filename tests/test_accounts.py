@@ -252,3 +252,11 @@ def test_refresh_token_with_no_token_unauthorized(client):
     response = client.post("/refresh-token")
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert response.json() == {"message": "Não autorizado"}
+
+
+def test_account_username_sanitization_on_registry():
+    ...  # TODO implementar teste
+
+
+def test_account_username_sanitization_on_update():
+    ...  # TODO implementar teste
