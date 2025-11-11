@@ -39,14 +39,6 @@ async def register_book(
     session: GetSession,
     current_user: GetCurrentUser,
 ):
-    novelist = await session.scalar(
-        select(Novelist).where(Novelist.id == book.novelist_id)
-    )
-    if not novelist:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail="Romancista não consta no MADR",
-        )
     book_info = Book(
         title=book.title, year=book.year, novelist_id=book.novelist_id
     )
@@ -55,11 +47,7 @@ async def register_book(
         await session.commit()
         await session.refresh(book_info)
         return book_info
-    except IntegrityError as er:  # pragma: no cover
-        """FIXME a checagem no novelist.id pra ver se existe esta acontecendo
-        no comeco da funcao, por aqui nao funciona. eu nao sei se eh por causa
-        do sqlite, lembre de testar novamente quando migrar para postgres"""
-
+    except IntegrityError as er:
         await session.rollback()
         er_msg = str(er.orig).lower()
         if "novelist_id" in er_msg:
@@ -146,10 +134,10 @@ async def update_book(
         await session.commit()
         await session.refresh(book_db)
         return book_db
+    # trata qualquer IntegrityError inesperado
     except IntegrityError as e:  # pragma: no cover
         await session.rollback()
         er_msg = str(e.orig).lower()
-        # trata qualquer IntegrityError inesperado
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail=f"Erro de integridade ao atualizar livro: ({er_msg})",
@@ -172,9 +160,9 @@ async def delete_book(
         await session.delete(book_db)
         await session.commit()
         return {"message": "Livro deletado do MADR"}
+    # trata qualquer IntegrityError inesperado
     except IntegrityError:  # pragma: no cover
         await session.rollback()
-        # trata qualquer IntegrityError inesperado
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
             detail="Erro ao deletar livro do MADR",
