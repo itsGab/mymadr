@@ -14,6 +14,8 @@ from pydantic import (
     model_validator,
 )
 
+from mymadr.messages import ResponseMessage
+
 
 # --- funções de sanitização e annotated ---
 def str_sanitizer(name: str) -> str:
@@ -71,7 +73,7 @@ class UserOnUpdate(BaseModel):
         if not any([self.username, self.email, self.password]):
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST,
-                detail="Pelo menos um campo deve ser fornecido",
+                detail=ResponseMessage.DATA_MISSING_FIELDS,
             )
         return self
 
@@ -112,7 +114,7 @@ class BookOnUpdate(BaseModel):
         if not any([self.year, self.title, self.novelist_id]):
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST,
-                detail="Pelo menos um campo deve ser fornecido",
+                detail=ResponseMessage.DATA_MISSING_FIELDS,
             )
         return self
 
@@ -178,6 +180,6 @@ class BookFilter(FilterPagination):
             if not any([self.year, self.title, self.novelist_id]):
                 raise HTTPException(
                     status_code=HTTPStatus.BAD_REQUEST,
-                    detail="Pelo menos um campo deve ser fornecido",
+                    detail=ResponseMessage.DATA_MISSING_FIELDS,
                 )
         return self

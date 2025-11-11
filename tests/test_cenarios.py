@@ -329,7 +329,7 @@ def test_delecao_de_livro(client, token, novelist):
         "romancista_id": 1,
     }
     status = HTTPStatus.OK
-    output = {"message": "Livro deletado do MADR"}
+    output = {"message": "Livro deletado no MADR"}
     client.post(
         "livro", headers={"Authorization": f"Bearer {token}"}, json=input
     )

@@ -272,7 +272,7 @@ def test_delete_book_success(client, book1, token):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {"message": "Livro deletado do MADR"}
+    assert response.json() == {"message": "Livro deletado no MADR"}
 
 
 def test_delete_book_not_authenticated_unauthorized(client, book1):

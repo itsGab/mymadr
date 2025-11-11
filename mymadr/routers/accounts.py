@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mymadr.database import get_session
+from mymadr.messages import ResponseMessage
 from mymadr.models import Account
 from mymadr.schemas import Message, Token, UserOnUpdate, UserPublic, UserSchema
 from mymadr.security import (
@@ -49,16 +50,17 @@ async def create_user(user: UserSchema, session: GetSession):
         if "username" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail="Nome de usuário já consta no MADR",
+                detail=ResponseMessage.ACCOUNT_USERNAME_CONFLICT,
             )
         if "email" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail="Email já consta no MADR",
+                detail=ResponseMessage.ACCOUNT_EMAIL_CONFLICT,
             )
         # trata qualquer IntegrityError inesperado
         raise HTTPException(  # pragma: no cover
             status_code=HTTPStatus.BAD_REQUEST,
+            # TODO: vale a pena trabalhar nessa mensagem???
             detail=f"Erro de integridade ao cadastrar usuário: ({er_msg})",
         )
     await session.refresh(user_info)
@@ -85,7 +87,7 @@ async def update_user(
     if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
-            detail="Não autorizado",
+            detail=ResponseMessage.AUTH_NOT_AUTHORIZED,
         )
     try:
         user_info = user.model_dump(exclude_unset=True)
@@ -104,16 +106,17 @@ async def update_user(
         if "username" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail=("Nome de usuário já consta no MADR"),
+                detail=ResponseMessage.ACCOUNT_USERNAME_CONFLICT,
             )
         if "email" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail=("Email já consta no MADR"),
+                detail=ResponseMessage.ACCOUNT_EMAIL_CONFLICT,
             )
         # trata qualquer IntegrityError inesperado
         raise HTTPException(  # pragma: no cover
             status_code=HTTPStatus.BAD_REQUEST,
+            # TODO: vale a pena trabalhar nessa mensagem???
             detail=f"Erro de integridade ao cadastrar usuário: ({er_msg})",
         )
 
@@ -133,7 +136,7 @@ async def delete_user(
     if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
-            detail="Não autorizado",
+            detail=ResponseMessage.AUTH_NOT_AUTHORIZED,
         )
     await session.delete(current_user)
     await session.commit()
@@ -154,12 +157,12 @@ async def login_for_access_token(form_data: TokenForm, session: GetSession):
     if not user:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail="Email ou senha incorretos",
+            detail=ResponseMessage.AUTH_INVALID_CREDENTIALS,
         )
     if not verify_password(form_data.password, user.password):
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail="Email ou senha incorretos",
+            detail=ResponseMessage.AUTH_INVALID_CREDENTIALS,
         )
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}

@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mymadr.database import get_session
+from mymadr.messages import ResponseMessage
 from mymadr.models import Account, Novelist
 from mymadr.schemas import (
     Message,
@@ -47,10 +48,11 @@ async def register_novelist(
         if "name" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail="Romancista já consta no MADR",
+                detail=ResponseMessage.NOVELIST_CONFLICT,
             )
         # trata qualquer IntegrityError inesperado
         raise HTTPException(  # pragma: no cover
+            # TODO: vale a pena trabalhar nessa mensagem???
             status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Erro de integridade ao cadastrar romancista: ({er_msg})",
         )
@@ -70,7 +72,7 @@ async def get_novelist(novelist_id: int, session: GetSession):
         return romancista_db
     raise HTTPException(
         status_code=HTTPStatus.NOT_FOUND,
-        detail="Romancista não consta no MADR",
+        detail=ResponseMessage.NOVELIST_NOT_FOUND,
     )
 
 
@@ -115,7 +117,7 @@ async def update_novelist(
         if not novelist_db:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
-                detail="Romancista não consta no MADR",
+                detail=ResponseMessage.NOVELIST_NOT_FOUND,
             )
         novelist_db.name = novelist.name
         await session.commit()
@@ -127,10 +129,11 @@ async def update_novelist(
         if "name" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail="Romancista já consta no MADR",
+                detail=ResponseMessage.NOVELIST_CONFLICT,
             )
         # trata qualquer IntegrityError inesperado
         raise HTTPException(  # pragma: no cover
+            # TODO: vale a pena trabalhar nessa mensagem???
             status_code=HTTPStatus.BAD_REQUEST,
             detail=f"Erro de integridade ao atualizar romancista: ({er_msg})",
         )
@@ -153,11 +156,12 @@ async def delete_novelist(
         )
         await session.delete(novelist_db)
         await session.commit()
-        return {"message": "Romancista deletado no MADR"}
+        return {"message": ResponseMessage.NOVELIST_DELETED_SUCCESS}
     # trata qualquer IntegrityError inesperado
     except IntegrityError:  # pragma: no cover
         await session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail="Erro ao deletar romancista do MADR",
+            # TODO: vale a pena trabalhar nessa mensagem???
+            detail="Erro ao deletar romancista no MADR",
         )

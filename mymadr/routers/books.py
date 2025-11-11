@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mymadr.database import get_session
+from mymadr.messages import ResponseMessage
 from mymadr.models import Account, Book, Novelist
 from mymadr.schemas import (
     BookFilter,
@@ -53,11 +54,12 @@ async def register_book(
         if "novelist_id" in er_msg:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
-                detail="Romancista não consta no MADR",
+                detail=ResponseMessage.NOVELIST_NOT_FOUND,
             )
         # trata qualquer IntegrityError inesperado
         raise HTTPException(  # pragma: no cover
             status_code=HTTPStatus.BAD_REQUEST,
+            # TODO: vale a pena trabalhar nessa mensagem???
             detail=f"Erro de integridade ao cadastrar livro: ({er_msg})",
         )
 
@@ -73,7 +75,7 @@ async def get_book(book_id: int, session: GetSession):
     if not book_db:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
-            detail="Livro não consta no MADR",
+            detail=ResponseMessage.BOOK_NOT_FOUND,
         )
     return book_db
 
@@ -125,7 +127,7 @@ async def update_book(
         if not romancista_db:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
-                detail="Romancista não consta no MADR",
+                detail=ResponseMessage.NOVELIST_NOT_FOUND,
             )
     try:
         book_info = book.model_dump(exclude_unset=True)
@@ -140,6 +142,7 @@ async def update_book(
         er_msg = str(e.orig).lower()
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
+            # TODO: vale a pena trabalhar nessa mensagem???
             detail=f"Erro de integridade ao atualizar livro: ({er_msg})",
         )
 
@@ -159,11 +162,12 @@ async def delete_book(
         book_db = await session.scalar(select(Book).where(Book.id == book_id))
         await session.delete(book_db)
         await session.commit()
-        return {"message": "Livro deletado do MADR"}
+        return {"message": ResponseMessage.BOOK_DELETED_SUCCESS}
     # trata qualquer IntegrityError inesperado
     except IntegrityError:  # pragma: no cover
         await session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail="Erro ao deletar livro do MADR",
+            # TODO: vale a pena trabalhar nessa mensagem???
+            detail="Erro ao deletar livro no MADR",
         )
