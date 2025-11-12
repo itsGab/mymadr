@@ -148,7 +148,7 @@ async def delete_user(
     "/token",
     response_model=Token,
     responses={HTTPStatus.BAD_REQUEST: {"model": Message}},
-    tags=["auth"],
+    tags=["autenticacao"],
 )
 async def login_for_access_token(form_data: TokenForm, session: GetSession):
     user = await session.scalar(
@@ -168,7 +168,7 @@ async def login_for_access_token(form_data: TokenForm, session: GetSession):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/refresh-token", response_model=Token, tags=["auth"])
+@router.post("/refresh-token", response_model=Token, tags=["autenticacao"])
 def refresh_access_token(current_user: GetCurrentUser):
     new_access_token = create_access_token(data={"sub": current_user.email})
     return {"access_token": new_access_token, "token_type": "bearer"}

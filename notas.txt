@@ -1,4 +1,0 @@
-FALTA:
-- escrever os testes
-    - test_cenarios
-- criar variaveis para erros? afim de padronizar!

@@ -17,7 +17,7 @@ from pydantic import (
 from mymadr.messages import ResponseMessage
 
 
-# --- funções de sanitização e annotated ---
+# --- funções de sanitização ---
 def str_sanitizer(name: str) -> str:
     name = re.sub(r"\s+", " ", name.lower()).strip()
     return name
@@ -27,6 +27,7 @@ def user_sanitizer(username: str) -> str:
     return re.sub(r"[^\w]", "", username.lower())
 
 
+# --- tipo sanitizado ---
 SanitizedString = Annotated[  # sanitização dos nomes
     str, AfterValidator(str_sanitizer)
 ]
@@ -133,25 +134,18 @@ class Token(BaseModel):
     token_type: str
 
 
-# --- filters ---
-# BY OFFSET AND LIMIT
-class FilterPage(BaseModel):
-    offset: int = Field(0, ge=0, lt=980)
-    limit: int = Field(20, ge=1, lt=100)
-
-
-# BY PAGES OF 20
+# --- pages and filters ---
 class FilterPagination(BaseModel):
     page: int = Field(1, ge=1, lt=50, alias="pagina")
-    _page_size: int = 20
+    page_size: int = Field(20, frozen=True)
 
     @property
     def limit(self) -> int:
-        return self._page_size
+        return self.page_size
 
     @property
     def offset(self) -> int:
-        return (self.page - 1) * self._page_size
+        return (self.page - 1) * self.page_size
 
 
 class NovelistFilter(FilterPagination):
@@ -171,7 +165,7 @@ class BookFilter(FilterPagination):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    # when True checks for at least one filled field
+    # when True checks for at least one field was provided
     _valid_fields: bool = False
 
     @model_validator(mode="after")  # pragma: no cover

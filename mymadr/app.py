@@ -13,7 +13,7 @@ tags_metadata = [
     {"name": "conta", "description": "Gerenciamento de contas"},
     {"name": "romancista", "description": "Gerenciamento de romancistas"},
     {"name": "livro", "description": "Gerenciamento de livros"},
-    {"name": "auth", "description": "Autorizações"},
+    {"name": "autenticacao", "description": "Autorizações"},
 ]
 
 
